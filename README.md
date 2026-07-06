@@ -98,8 +98,26 @@ proxy.ts                   # Next 16 middleware: session refresh + route gating
 supabase/migrations/       # SQL schema + RLS
 ```
 
+## Importing from setlist.fm
+
+Paste a setlist.fm setlist URL into the **Import from setlist.fm** field in the
+Add tab and hit **Fetch** — the artist, venue, city, country, date, coordinates,
+and full setlist are pulled in for you to review, then save.
+
+setlist.fm blocks browser/CORS requests and the key must stay server-side, so the
+request is proxied: `client → /api/setlistfm → api.setlist.fm`. To enable it, add a
+free (non-commercial) key from [api.setlist.fm](https://api.setlist.fm/docs/) to
+your environment:
+
+```
+SETLIST_FM_API_KEY=your-setlistfm-key
+```
+
+Put it in `.env.local` for local dev and in your Vercel project's environment
+variables for production. Without a key the rest of the app works; only the
+import is disabled.
+
 ## Roadmap
 
-- **Phase 2:** setlist.fm auto-import through `/api/setlistfm` (holds the API
-  key server-side; free non-commercial key required).
-- Drag-to-adjust pins, richer stats, and optional Mapbox tiles.
+- Drag-to-adjust pins, richer stats, and optional Mapbox/Google tiles.
+- Bulk setlist.fm import (paste several URLs at once).

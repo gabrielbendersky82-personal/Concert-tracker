@@ -80,6 +80,29 @@ export async function bulkCreateShows(inputs: NewShowInput[]): Promise<number> {
   return created;
 }
 
+export interface SetlistFmImport {
+  artist: string;
+  venue: string;
+  city: string;
+  country: string;
+  date: string;
+  latitude: number | null;
+  longitude: number | null;
+  setlist: string[];
+}
+
+/** Import a show from a setlist.fm URL via the server-side proxy. */
+export async function importFromSetlistFm(
+  urlOrId: string
+): Promise<SetlistFmImport> {
+  const res = await fetch(`/api/setlistfm?url=${encodeURIComponent(urlOrId)}`);
+  const body = (await res.json()) as { result?: SetlistFmImport; error?: string };
+  if (!res.ok || !body.result) {
+    throw new Error(body.error ?? "Could not import from setlist.fm.");
+  }
+  return body.result;
+}
+
 /** Look up coordinates for a place string via the server geocode proxy. */
 export async function geocode(
   query: string

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createShow, geocode } from "@/lib/shows";
+import { createShow, geocode, importFromSetlistFm } from "@/lib/shows";
 
 const inputClass =
   "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
@@ -22,6 +22,15 @@ export default function AddShowForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  // setlist.fm import
+  const [importUrl, setImportUrl] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importNote, setImportNote] = useState("");
+  // Coordinates supplied by setlist.fm, so we can skip geocoding on save.
+  const [importedCoords, setImportedCoords] = useState<
+    { lat: number; lon: number } | null
+  >(null);
+
   function reset() {
     setArtist("");
     setVenue("");
@@ -30,6 +39,39 @@ export default function AddShowForm({
     setDate("");
     setSetlist("");
     setNotes("");
+    setImportUrl("");
+    setImportNote("");
+    setImportedCoords(null);
+  }
+
+  async function handleImport() {
+    if (!importUrl.trim()) return;
+    setImporting(true);
+    setImportNote("");
+    setError("");
+    try {
+      const data = await importFromSetlistFm(importUrl);
+      if (data.artist) setArtist(data.artist);
+      if (data.venue) setVenue(data.venue);
+      if (data.city) setCity(data.city);
+      if (data.country) setCountry(data.country);
+      if (data.date) setDate(data.date);
+      if (data.setlist.length) setSetlist(data.setlist.join("\n"));
+      setImportedCoords(
+        data.latitude != null && data.longitude != null
+          ? { lat: data.latitude, lon: data.longitude }
+          : null
+      );
+      setImportNote(
+        `Imported ${data.artist}${
+          data.setlist.length ? ` · ${data.setlist.length} songs` : ""
+        }. Review and save.`
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Import failed.");
+    } finally {
+      setImporting(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -42,23 +84,36 @@ export default function AddShowForm({
     setError("");
 
     try {
-      const place = [venue, city, country].map((s) => s.trim()).filter(Boolean).join(", ");
-      let coords: { lat: number; lon: number; country: string | null } | null =
-        null;
-      if (place) {
-        coords = await geocode(place);
+      // Prefer coordinates from setlist.fm; otherwise geocode the venue/city.
+      let lat: number | null = importedCoords?.lat ?? null;
+      let lon: number | null = importedCoords?.lon ?? null;
+      let resolvedCountry = country.trim();
+
+      if (lat == null || lon == null) {
+        const place = [venue, city, country]
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .join(", ");
+        if (place) {
+          const coords = await geocode(place);
+          if (coords) {
+            lat = coords.lat;
+            lon = coords.lon;
+            if (!resolvedCountry && coords.country) resolvedCountry = coords.country;
+          }
+        }
       }
 
       await createShow({
         artist,
         venue,
         city,
-        country: country.trim() || coords?.country || "",
+        country: resolvedCountry,
         show_date: date,
         notes,
         setlist: setlist.split("\n"),
-        latitude: coords?.lat ?? null,
-        longitude: coords?.lon ?? null,
+        latitude: lat,
+        longitude: lon,
       });
 
       reset();
@@ -72,6 +127,32 @@ export default function AddShowForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+        <label className={labelClass} htmlFor="setlistfm">
+          Import from setlist.fm
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="setlistfm"
+            className={inputClass}
+            value={importUrl}
+            onChange={(e) => setImportUrl(e.target.value)}
+            placeholder="Paste a setlist.fm URL"
+          />
+          <button
+            type="button"
+            onClick={handleImport}
+            disabled={importing || !importUrl.trim()}
+            className="shrink-0 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {importing ? "…" : "Fetch"}
+          </button>
+        </div>
+        {importNote && (
+          <p className="mt-2 text-xs text-emerald-700">{importNote}</p>
+        )}
+      </div>
+
       <div>
         <label className={labelClass} htmlFor="artist">
           Artist *
@@ -95,7 +176,10 @@ export default function AddShowForm({
             id="venue"
             className={inputClass}
             value={venue}
-            onChange={(e) => setVenue(e.target.value)}
+            onChange={(e) => {
+              setVenue(e.target.value);
+              setImportedCoords(null);
+            }}
             placeholder="Wembley Stadium"
           />
         </div>
@@ -123,7 +207,10 @@ export default function AddShowForm({
             id="city"
             className={inputClass}
             value={city}
-            onChange={(e) => setCity(e.target.value)}
+            onChange={(e) => {
+              setCity(e.target.value);
+              setImportedCoords(null);
+            }}
             placeholder="London"
           />
         </div>
