@@ -115,6 +115,9 @@ export default function ConcertApp({ userEmail }: { userEmail: string }) {
           onSelect={handleSelect}
         />
 
+        {/* Soft top vignette so the map blends into the hero's shadow above */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] h-14 bg-gradient-to-b from-black/15 to-transparent" />
+
         {!loading && shows.length === 0 && (
           <div className="pointer-events-none absolute inset-0 z-[500] flex items-center justify-center p-6">
             <div className="pointer-events-auto max-w-xs rounded-2xl bg-white/95 p-5 text-center shadow-lg backdrop-blur">
