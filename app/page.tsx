@@ -13,6 +13,16 @@ export default async function Home() {
     redirect("/login");
   }
 
+  // First-time users pick a handle before entering the app.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!profile) {
+    redirect("/welcome");
+  }
+
   const { count } = await supabase
     .from("shows")
     .select("id", { count: "exact", head: true });

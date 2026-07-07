@@ -19,6 +19,25 @@ export async function fetchShows(): Promise<Show[]> {
   })) as Show[];
 }
 
+/** Fetch a specific user's shows (RLS permits this only for accepted friends). */
+export async function fetchShowsFor(userId: string): Promise<Show[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("shows")
+    .select("*, setlist_songs(*)")
+    .eq("user_id", userId)
+    .order("show_date", { ascending: false });
+
+  if (error) throw error;
+
+  return (data ?? []).map((show) => ({
+    ...show,
+    setlist_songs: [...(show.setlist_songs ?? [])].sort(
+      (a, b) => a.position - b.position
+    ),
+  })) as Show[];
+}
+
 /** Insert one show plus its setlist songs. Returns the new show id. */
 export async function createShow(input: NewShowInput): Promise<string> {
   const supabase = createClient();

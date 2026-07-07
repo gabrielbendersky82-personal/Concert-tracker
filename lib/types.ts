@@ -20,6 +20,28 @@ export interface Show {
   setlist_songs: SetlistSong[];
 }
 
+export interface Profile {
+  id: string;
+  handle: string;
+  display_name: string | null;
+  created_at?: string;
+}
+
+export interface Friendship {
+  id: string;
+  requester: string;
+  addressee: string;
+  status: "pending" | "accepted";
+  created_at?: string;
+}
+
+export type FriendState =
+  | "none"
+  | "pending_outgoing"
+  | "pending_incoming"
+  | "accepted"
+  | "self";
+
 /** Shape used when creating a show from the add-show form. */
 export interface NewShowInput {
   artist: string;

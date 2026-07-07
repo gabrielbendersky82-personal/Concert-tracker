@@ -155,12 +155,12 @@ export default function ConcertApp({ userEmail }: { userEmail: string }) {
           sheetOpen ? "translate-y-0" : "translate-y-[calc(100%-3.75rem)]"
         } md:translate-y-0`}
       >
-        {/* Header (tap to toggle on mobile) */}
-        <button
-          onClick={() => setSheetOpen((o) => !o)}
-          className="flex w-full items-center justify-between px-4 py-3 text-left md:cursor-default"
-        >
-          <div className="flex items-center gap-2">
+        {/* Header (tap title to toggle on mobile) */}
+        <div className="flex w-full items-center justify-between px-4 py-3">
+          <button
+            onClick={() => setSheetOpen((o) => !o)}
+            className="flex items-center gap-2 text-left md:cursor-default"
+          >
             <span className="text-lg" aria-hidden>
               📍
             </span>
@@ -172,14 +172,23 @@ export default function ConcertApp({ userEmail }: { userEmail: string }) {
                 {shows.length} show{shows.length === 1 ? "" : "s"} · {userEmail}
               </p>
             </div>
+          </button>
+          <div className="flex items-center gap-1">
+            <Link
+              href="/friends"
+              className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50"
+            >
+              Friends
+            </Link>
+            <button
+              onClick={() => setSheetOpen((o) => !o)}
+              className="px-1 text-slate-400 md:hidden"
+              aria-label="Toggle panel"
+            >
+              {sheetOpen ? "▾" : "▴"}
+            </button>
           </div>
-          <span
-            className="text-slate-400 md:hidden"
-            aria-hidden
-          >
-            {sheetOpen ? "▾" : "▴"}
-          </span>
-        </button>
+        </div>
 
         {selectedShow ? (
           <div className="min-h-0 flex-1 overflow-y-auto border-t border-slate-100 p-4">
