@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { bulkCreateShows, deleteShow, fetchShows } from "@/lib/shows";
 import { SAMPLE_SHOWS } from "@/lib/sampleShows";
@@ -227,7 +228,18 @@ export default function ConcertApp({ userEmail }: { userEmail: string }) {
                 />
               )}
 
-              {tab === "stats" && <StatsPanel shows={shows} />}
+              {tab === "stats" && (
+                <div className="space-y-3">
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center justify-between rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
+                  >
+                    Open full dashboard
+                    <span aria-hidden>→</span>
+                  </Link>
+                  <StatsPanel shows={shows} />
+                </div>
+              )}
 
               {tab === "data" && (
                 <div className="space-y-4">
