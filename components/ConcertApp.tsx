@@ -115,8 +115,14 @@ export default function ConcertApp({ userEmail }: { userEmail: string }) {
           onSelect={handleSelect}
         />
 
-        {/* Soft top vignette so the map blends into the hero's shadow above */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] h-14 bg-gradient-to-b from-black/15 to-transparent" />
+        {/* Light top fade so the map tiles emerge softly from the hero dissolve */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 z-[500] h-24"
+          style={{
+            background:
+              "linear-gradient(180deg, #eef1f6, rgba(238,241,246,0))",
+          }}
+        />
 
         {!loading && shows.length === 0 && (
           <div className="pointer-events-none absolute inset-0 z-[500] flex items-center justify-center p-6">

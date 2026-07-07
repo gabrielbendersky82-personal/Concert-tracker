@@ -20,9 +20,16 @@ export default function Hero({
         sizes="100vw"
         className="object-cover"
       />
-      {/* Legibility scrims: overall dim + stronger top/bottom for the bars */}
-      <div className="absolute inset-0 bg-black/45" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-black/85" />
+      {/* Legibility scrim + a long dissolve into the light app color below */}
+      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/15 to-transparent" />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, transparent 45%, rgba(238,241,246,0.55) 72%, #eef1f6 100%)",
+        }}
+      />
 
       {/* top bar */}
       <div className="relative z-10 flex items-center justify-between px-6 py-5">
@@ -41,7 +48,7 @@ export default function Hero({
       </div>
 
       {/* hero copy */}
-      <div className="relative z-10 mx-auto flex max-w-2xl flex-1 flex-col items-center justify-center px-6 pb-[12vh] text-center">
+      <div className="relative z-10 mx-auto flex max-w-2xl flex-1 flex-col items-center justify-center px-6 pb-[20vh] text-center">
         <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-200">
           Your live-music map
         </p>
