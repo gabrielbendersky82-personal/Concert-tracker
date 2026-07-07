@@ -1,20 +1,16 @@
-"use client";
-
 import Image from "next/image";
 
-// Full-screen concert-photo hero. Rendered on top of the map by ScrollStage,
-// which fades it out as the user scrolls (scroll-linked crossfade).
+// Landing hero shown above the map after login: a full-bleed concert photo with
+// a dark scrim for legibility. Scroll (or the CTA) reveals the map/app below.
 export default function Hero({
   email,
   count,
-  onOpen,
 }: {
   email: string;
   count: number;
-  onOpen?: () => void;
 }) {
   return (
-    <section className="relative flex h-dvh flex-col overflow-hidden text-white">
+    <section className="relative flex min-h-dvh flex-col overflow-hidden text-white">
       {/* Background photo */}
       <Image
         src="/hero.jpg"
@@ -24,9 +20,16 @@ export default function Hero({
         sizes="100vw"
         className="object-cover"
       />
-      {/* Legibility scrims */}
-      <div className="absolute inset-0 bg-black/45" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-black/80" />
+      {/* Legibility scrim + a long dissolve into the light app color below */}
+      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/15 to-transparent" />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, transparent 45%, rgba(238,241,246,0.55) 72%, #eef1f6 100%)",
+        }}
+      />
 
       {/* top bar */}
       <div className="relative z-10 flex items-center justify-between px-6 py-5">
@@ -45,7 +48,7 @@ export default function Hero({
       </div>
 
       {/* hero copy */}
-      <div className="relative z-10 mx-auto flex max-w-2xl flex-1 flex-col items-center justify-center px-6 pb-[8vh] text-center">
+      <div className="relative z-10 mx-auto flex max-w-2xl flex-1 flex-col items-center justify-center px-6 pb-[20vh] text-center">
         <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-200">
           Your live-music map
         </p>
@@ -66,18 +69,16 @@ export default function Hero({
         </p>
 
         <div className="mt-9 flex flex-col items-center gap-4">
-          <button
-            type="button"
-            onClick={onOpen}
+          <a
+            href="#app"
             className="rounded-full bg-white px-7 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-black/40 transition hover:bg-indigo-100"
           >
             {count > 0
               ? `Open your map · ${count} show${count === 1 ? "" : "s"}`
               : "Open your map"}
-          </button>
-          <button
-            type="button"
-            onClick={onOpen}
+          </a>
+          <a
+            href="#app"
             className="flex items-center gap-1 text-xs font-medium text-white/70 transition hover:text-white"
             aria-label="Scroll to your map"
           >
@@ -85,7 +86,7 @@ export default function Hero({
             <span aria-hidden className="animate-bounce">
               ↓
             </span>
-          </button>
+          </a>
         </div>
       </div>
     </section>

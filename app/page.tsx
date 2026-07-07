@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import ScrollStage from "@/components/ScrollStage";
+import ConcertApp from "@/components/ConcertApp";
+import Hero from "@/components/Hero";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -16,5 +17,14 @@ export default async function Home() {
     .from("shows")
     .select("id", { count: "exact", head: true });
 
-  return <ScrollStage email={user.email ?? "you"} count={count ?? 0} />;
+  return (
+    <main className="flex flex-col bg-[#eef1f6]">
+      <Hero email={user.email ?? "you"} count={count ?? 0} />
+      {/* Map/app sheet. The hero above dissolves into #eef1f6 and the map fades
+          in from the same colour, so there's no seam. */}
+      <section id="app" className="h-dvh w-full bg-[#eef1f6]">
+        <ConcertApp userEmail={user.email ?? "you"} />
+      </section>
+    </main>
+  );
 }
