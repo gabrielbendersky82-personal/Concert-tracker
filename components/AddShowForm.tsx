@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { createShow, geocode, importFromSetlistFm } from "@/lib/shows";
+import {
+  createShow,
+  geocode,
+  importFromSetlistFm,
+  searchSetlistFm,
+  type SetlistFmResult,
+} from "@/lib/shows";
 
 const inputClass =
   "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
@@ -22,10 +28,17 @@ export default function AddShowForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  // setlist.fm import
+  // setlist.fm import / search
+  const [fmMode, setFmMode] = useState<"search" | "url">("search");
   const [importUrl, setImportUrl] = useState("");
   const [importing, setImporting] = useState(false);
   const [importNote, setImportNote] = useState("");
+  // search
+  const [sArtist, setSArtist] = useState("");
+  const [sCity, setSCity] = useState("");
+  const [sYear, setSYear] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [results, setResults] = useState<SetlistFmResult[] | null>(null);
   // Coordinates supplied by setlist.fm, so we can skip geocoding on save.
   const [importedCoords, setImportedCoords] = useState<
     { lat: number; lon: number } | null
@@ -42,6 +55,47 @@ export default function AddShowForm({
     setImportUrl("");
     setImportNote("");
     setImportedCoords(null);
+    setResults(null);
+    setSArtist("");
+    setSCity("");
+    setSYear("");
+  }
+
+  async function handleSearch() {
+    if (!sArtist.trim() && !sCity.trim()) return;
+    setSearching(true);
+    setError("");
+    setResults(null);
+    try {
+      const found = await searchSetlistFm({
+        artist: sArtist.trim(),
+        city: sCity.trim(),
+        year: sYear.trim(),
+      });
+      setResults(found);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Search failed.");
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  function applyResult(r: SetlistFmResult) {
+    setArtist(r.artist);
+    setVenue(r.venue);
+    setCity(r.city);
+    setCountry(r.country);
+    setDate(r.date);
+    setSetlist(r.setlist.join("\n"));
+    setImportedCoords(
+      r.latitude != null && r.longitude != null
+        ? { lat: r.latitude, lon: r.longitude }
+        : null
+    );
+    setResults(null);
+    setImportNote(
+      `Loaded ${r.artist}${r.songCount ? ` · ${r.songCount} songs` : ""}. Review and save.`
+    );
   }
 
   async function handleImport() {
@@ -128,26 +182,114 @@ export default function AddShowForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
-        <label className={labelClass} htmlFor="setlistfm">
-          Import from setlist.fm
-        </label>
-        <div className="flex gap-2">
-          <input
-            id="setlistfm"
-            className={inputClass}
-            value={importUrl}
-            onChange={(e) => setImportUrl(e.target.value)}
-            placeholder="Paste a setlist.fm URL"
-          />
-          <button
-            type="button"
-            onClick={handleImport}
-            disabled={importing || !importUrl.trim()}
-            className="shrink-0 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {importing ? "…" : "Fetch"}
-          </button>
+        <div className="mb-2 flex items-center gap-1">
+          {(["search", "url"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setFmMode(m)}
+              className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
+                fmMode === m
+                  ? "bg-indigo-600 text-white"
+                  : "text-indigo-700 hover:bg-indigo-100"
+              }`}
+            >
+              {m === "search" ? "Search setlist.fm" : "Paste link"}
+            </button>
+          ))}
         </div>
+
+        {fmMode === "search" ? (
+          <>
+            <div className="grid grid-cols-6 gap-2">
+              <input
+                className={`${inputClass} col-span-3`}
+                value={sArtist}
+                onChange={(e) => setSArtist(e.target.value)}
+                placeholder="Artist"
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleSearch())}
+              />
+              <input
+                className={`${inputClass} col-span-2`}
+                value={sCity}
+                onChange={(e) => setSCity(e.target.value)}
+                placeholder="City"
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleSearch())}
+              />
+              <input
+                className={`${inputClass} col-span-1`}
+                value={sYear}
+                onChange={(e) => setSYear(e.target.value)}
+                placeholder="Year"
+                inputMode="numeric"
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleSearch())}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleSearch}
+              disabled={searching || (!sArtist.trim() && !sCity.trim())}
+              className="mt-2 w-full rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {searching ? "Searching…" : "Search concerts"}
+            </button>
+
+            {results && (
+              <div className="mt-2 max-h-64 space-y-1 overflow-y-auto">
+                {results.length === 0 ? (
+                  <p className="py-2 text-center text-xs text-slate-500">
+                    No concerts found. Try just the artist, or a different city.
+                  </p>
+                ) : (
+                  results.map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => applyResult(r)}
+                      className="w-full rounded-lg border border-slate-200 bg-white p-2 text-left transition hover:border-indigo-300 hover:bg-indigo-50/50"
+                    >
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="truncate text-sm font-medium text-slate-900">
+                          {r.artist}
+                        </span>
+                        <span className="shrink-0 text-xs tabular-nums text-slate-400">
+                          {r.date || "—"}
+                        </span>
+                      </div>
+                      <div className="truncate text-xs text-slate-500">
+                        {[r.venue, r.city, r.country].filter(Boolean).join(" · ") ||
+                          "Unknown venue"}
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-slate-400">
+                        {r.songCount ? `${r.songCount} songs` : "no setlist"}
+                        {r.tour ? ` · ${r.tour}` : ""}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              id="setlistfm"
+              className={inputClass}
+              value={importUrl}
+              onChange={(e) => setImportUrl(e.target.value)}
+              placeholder="Paste a setlist.fm URL"
+            />
+            <button
+              type="button"
+              onClick={handleImport}
+              disabled={importing || !importUrl.trim()}
+              className="shrink-0 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {importing ? "…" : "Fetch"}
+            </button>
+          </div>
+        )}
+
         {importNote && (
           <p className="mt-2 text-xs text-emerald-700">{importNote}</p>
         )}

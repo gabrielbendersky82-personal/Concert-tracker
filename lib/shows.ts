@@ -110,6 +110,34 @@ export interface SetlistFmImport {
   setlist: string[];
 }
 
+export interface SetlistFmResult extends SetlistFmImport {
+  id: string;
+  tour: string | null;
+  songCount: number;
+}
+
+/** Search setlist.fm for concerts by artist / city / year. */
+export async function searchSetlistFm(params: {
+  artist?: string;
+  city?: string;
+  year?: string;
+  page?: number;
+}): Promise<SetlistFmResult[]> {
+  const qs = new URLSearchParams();
+  if (params.artist) qs.set("artist", params.artist);
+  if (params.city) qs.set("city", params.city);
+  if (params.year) qs.set("year", params.year);
+  if (params.page) qs.set("page", String(params.page));
+
+  const res = await fetch(`/api/setlistfm/search?${qs.toString()}`);
+  const body = (await res.json()) as {
+    results?: SetlistFmResult[];
+    error?: string;
+  };
+  if (!res.ok) throw new Error(body.error ?? "Search failed.");
+  return body.results ?? [];
+}
+
 /** Import a show from a setlist.fm URL via the server-side proxy. */
 export async function importFromSetlistFm(
   urlOrId: string
