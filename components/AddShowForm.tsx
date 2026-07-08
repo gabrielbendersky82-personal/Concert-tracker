@@ -13,6 +13,18 @@ const inputClass =
   "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
 const labelClass = "mb-1 block text-xs font-medium text-slate-600";
 
+type Mode = "search" | "url" | "manual";
+
+const METHODS: {
+  id: Mode;
+  label: string;
+  icon: (props: { className?: string }) => React.ReactElement;
+}[] = [
+  { id: "search", label: "Search", icon: SearchIcon },
+  { id: "url", label: "Paste link", icon: LinkIcon },
+  { id: "manual", label: "Manual", icon: PencilIcon },
+];
+
 export default function AddShowForm({
   onCreated,
 }: {
@@ -28,12 +40,17 @@ export default function AddShowForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  // setlist.fm import / search
-  const [fmMode, setFmMode] = useState<"search" | "url">("search");
+  // How the user is adding this show.
+  const [mode, setMode] = useState<Mode>("search");
+  // True once a search result / pasted link has populated the detail fields, so
+  // the "Review & save" section reveals in search/url modes.
+  const [hasDraft, setHasDraft] = useState(false);
+
+  // setlist.fm import (paste link)
   const [importUrl, setImportUrl] = useState("");
   const [importing, setImporting] = useState(false);
   const [importNote, setImportNote] = useState("");
-  // search
+  // setlist.fm search
   const [sArtist, setSArtist] = useState("");
   const [sCity, setSCity] = useState("");
   const [sYear, setSYear] = useState("");
@@ -43,6 +60,10 @@ export default function AddShowForm({
   const [importedCoords, setImportedCoords] = useState<
     { lat: number; lon: number } | null
   >(null);
+
+  // Detail fields are always shown in manual mode; in search/url modes they
+  // appear only after a draft has been loaded from setlist.fm.
+  const showDetails = mode === "manual" || hasDraft;
 
   function reset() {
     setArtist("");
@@ -59,6 +80,12 @@ export default function AddShowForm({
     setSArtist("");
     setSCity("");
     setSYear("");
+    setHasDraft(false);
+  }
+
+  function selectMode(next: Mode) {
+    setMode(next);
+    setError("");
   }
 
   async function handleSearch() {
@@ -93,6 +120,7 @@ export default function AddShowForm({
         : null
     );
     setResults(null);
+    setHasDraft(true);
     setImportNote(
       `Loaded ${r.artist}${r.songCount ? ` · ${r.songCount} songs` : ""}. Review and save.`
     );
@@ -116,6 +144,7 @@ export default function AddShowForm({
           ? { lat: data.latitude, lon: data.longitude }
           : null
       );
+      setHasDraft(true);
       setImportNote(
         `Imported ${data.artist}${
           data.setlist.length ? ` · ${data.setlist.length} songs` : ""
@@ -181,96 +210,105 @@ export default function AddShowForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
-        <div className="mb-2 flex items-center gap-1">
-          {(["search", "url"] as const).map((m) => (
+      {/* Method selector — pick how to add this show. */}
+      <div className="grid grid-cols-3 gap-1 rounded-xl border border-indigo-100 bg-indigo-50/60 p-1">
+        {METHODS.map(({ id, label, icon: Icon }) => {
+          const active = mode === id;
+          return (
             <button
-              key={m}
+              key={id}
               type="button"
-              onClick={() => setFmMode(m)}
-              className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
-                fmMode === m
-                  ? "bg-indigo-600 text-white"
+              onClick={() => selectMode(id)}
+              aria-pressed={active}
+              className={`flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition ${
+                active
+                  ? "bg-indigo-600 text-white shadow-sm"
                   : "text-indigo-700 hover:bg-indigo-100"
               }`}
             >
-              {m === "search" ? "Search setlist.fm" : "Paste link"}
+              <Icon className="h-3.5 w-3.5" />
+              {label}
             </button>
-          ))}
-        </div>
+          );
+        })}
+      </div>
 
-        {fmMode === "search" ? (
-          <>
-            <div className="grid grid-cols-6 gap-2">
-              <input
-                className={`${inputClass} col-span-3`}
-                value={sArtist}
-                onChange={(e) => setSArtist(e.target.value)}
-                placeholder="Artist"
-                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleSearch())}
-              />
-              <input
-                className={`${inputClass} col-span-2`}
-                value={sCity}
-                onChange={(e) => setSCity(e.target.value)}
-                placeholder="City"
-                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleSearch())}
-              />
-              <input
-                className={`${inputClass} col-span-1`}
-                value={sYear}
-                onChange={(e) => setSYear(e.target.value)}
-                placeholder="Year"
-                inputMode="numeric"
-                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleSearch())}
-              />
+      {/* Source input for the selected method (hidden in manual mode). */}
+      {mode === "search" && (
+        <div className="space-y-2">
+          <div className="grid grid-cols-6 gap-2">
+            <input
+              className={`${inputClass} col-span-3`}
+              value={sArtist}
+              onChange={(e) => setSArtist(e.target.value)}
+              placeholder="Artist"
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleSearch())}
+            />
+            <input
+              className={`${inputClass} col-span-2`}
+              value={sCity}
+              onChange={(e) => setSCity(e.target.value)}
+              placeholder="City"
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleSearch())}
+            />
+            <input
+              className={`${inputClass} col-span-1`}
+              value={sYear}
+              onChange={(e) => setSYear(e.target.value)}
+              placeholder="Year"
+              inputMode="numeric"
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleSearch())}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleSearch}
+            disabled={searching || (!sArtist.trim() && !sCity.trim())}
+            className="w-full rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {searching ? "Searching…" : "Search concerts"}
+          </button>
+
+          {results && (
+            <div className="max-h-64 space-y-1 overflow-y-auto">
+              {results.length === 0 ? (
+                <p className="py-2 text-center text-xs text-slate-500">
+                  No concerts found. Try just the artist, or a different city.
+                </p>
+              ) : (
+                results.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => applyResult(r)}
+                    className="w-full rounded-lg border border-slate-200 bg-white p-2 text-left transition hover:border-indigo-300 hover:bg-indigo-50/50"
+                  >
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="truncate text-sm font-medium text-slate-900">
+                        {r.artist}
+                      </span>
+                      <span className="shrink-0 text-xs tabular-nums text-slate-400">
+                        {r.date || "—"}
+                      </span>
+                    </div>
+                    <div className="truncate text-xs text-slate-500">
+                      {[r.venue, r.city, r.country].filter(Boolean).join(" · ") ||
+                        "Unknown venue"}
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-slate-400">
+                      {r.songCount ? `${r.songCount} songs` : "no setlist"}
+                      {r.tour ? ` · ${r.tour}` : ""}
+                    </div>
+                  </button>
+                ))
+              )}
             </div>
-            <button
-              type="button"
-              onClick={handleSearch}
-              disabled={searching || (!sArtist.trim() && !sCity.trim())}
-              className="mt-2 w-full rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
-            >
-              {searching ? "Searching…" : "Search concerts"}
-            </button>
+          )}
+        </div>
+      )}
 
-            {results && (
-              <div className="mt-2 max-h-64 space-y-1 overflow-y-auto">
-                {results.length === 0 ? (
-                  <p className="py-2 text-center text-xs text-slate-500">
-                    No concerts found. Try just the artist, or a different city.
-                  </p>
-                ) : (
-                  results.map((r) => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => applyResult(r)}
-                      className="w-full rounded-lg border border-slate-200 bg-white p-2 text-left transition hover:border-indigo-300 hover:bg-indigo-50/50"
-                    >
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="truncate text-sm font-medium text-slate-900">
-                          {r.artist}
-                        </span>
-                        <span className="shrink-0 text-xs tabular-nums text-slate-400">
-                          {r.date || "—"}
-                        </span>
-                      </div>
-                      <div className="truncate text-xs text-slate-500">
-                        {[r.venue, r.city, r.country].filter(Boolean).join(" · ") ||
-                          "Unknown venue"}
-                      </div>
-                      <div className="mt-0.5 text-[11px] text-slate-400">
-                        {r.songCount ? `${r.songCount} songs` : "no setlist"}
-                        {r.tour ? ` · ${r.tour}` : ""}
-                      </div>
-                    </button>
-                  ))
-                )}
-              </div>
-            )}
-          </>
-        ) : (
+      {mode === "url" && (
+        <div className="space-y-1.5">
           <div className="flex gap-2">
             <input
               id="setlistfm"
@@ -288,131 +326,216 @@ export default function AddShowForm({
               {importing ? "…" : "Fetch"}
             </button>
           </div>
-        )}
-
-        {importNote && (
-          <p className="mt-2 text-xs text-emerald-700">{importNote}</p>
-        )}
-      </div>
-
-      <div>
-        <label className={labelClass} htmlFor="artist">
-          Artist *
-        </label>
-        <input
-          id="artist"
-          className={inputClass}
-          value={artist}
-          onChange={(e) => setArtist(e.target.value)}
-          placeholder="e.g. Fleetwood Mac"
-          required
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass} htmlFor="venue">
-            Venue
-          </label>
-          <input
-            id="venue"
-            className={inputClass}
-            value={venue}
-            onChange={(e) => {
-              setVenue(e.target.value);
-              setImportedCoords(null);
-            }}
-            placeholder="Wembley Stadium"
-          />
+          <p className="text-xs text-slate-400">
+            We&apos;ll pull the artist, venue, date and setlist automatically.
+          </p>
         </div>
-        <div>
-          <label className={labelClass} htmlFor="date">
-            Date *
-          </label>
-          <input
-            id="date"
-            type="date"
-            className={inputClass}
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
+      )}
+
+      {/* Confirmation note after a successful search/import. */}
+      {!showDetails && importNote && (
+        <p className="text-xs text-emerald-700">{importNote}</p>
+      )}
+
+      {/* Detail fields — the manual entry / "Review & save" section. */}
+      {showDetails && (
+        <div className="space-y-3">
+          {mode !== "manual" && (
+            <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+              <p className="text-xs font-medium text-emerald-700">
+                {importNote || "Review the details, then save."}
+              </p>
+              <button
+                type="button"
+                onClick={reset}
+                className="shrink-0 text-xs font-medium text-slate-400 hover:text-slate-600"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+
+          <div>
+            <label className={labelClass} htmlFor="artist">
+              Artist *
+            </label>
+            <input
+              id="artist"
+              className={inputClass}
+              value={artist}
+              onChange={(e) => setArtist(e.target.value)}
+              placeholder="e.g. Fleetwood Mac"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass} htmlFor="venue">
+                Venue
+              </label>
+              <input
+                id="venue"
+                className={inputClass}
+                value={venue}
+                onChange={(e) => {
+                  setVenue(e.target.value);
+                  setImportedCoords(null);
+                }}
+                placeholder="Wembley Stadium"
+              />
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="date">
+                Date *
+              </label>
+              <input
+                id="date"
+                type="date"
+                className={inputClass}
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass} htmlFor="city">
+                City
+              </label>
+              <input
+                id="city"
+                className={inputClass}
+                value={city}
+                onChange={(e) => {
+                  setCity(e.target.value);
+                  setImportedCoords(null);
+                }}
+                placeholder="London"
+              />
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="country">
+                Country
+              </label>
+              <input
+                id="country"
+                className={inputClass}
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                placeholder="United Kingdom"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="setlist">
+              Setlist{" "}
+              <span className="font-normal text-slate-400">(one song per line)</span>
+            </label>
+            <textarea
+              id="setlist"
+              className={`${inputClass} min-h-[96px] resize-y`}
+              value={setlist}
+              onChange={(e) => setSetlist(e.target.value)}
+              placeholder={"The Chain\nDreams\nGo Your Own Way"}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="notes">
+              Notes
+            </label>
+            <input
+              id="notes"
+              className={inputClass}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Who you went with, memories…"
+            />
+          </div>
+
+          {error && (
+            <p className="text-sm text-red-600" role="alert">
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={busy}
+            className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:opacity-60"
+          >
+            {busy ? "Finding location & saving…" : "Add show"}
+          </button>
+          <p className="text-center text-xs text-slate-400">
+            We&apos;ll look up the venue&apos;s coordinates to place your pin.
+          </p>
         </div>
-      </div>
+      )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass} htmlFor="city">
-            City
-          </label>
-          <input
-            id="city"
-            className={inputClass}
-            value={city}
-            onChange={(e) => {
-              setCity(e.target.value);
-              setImportedCoords(null);
-            }}
-            placeholder="London"
-          />
-        </div>
-        <div>
-          <label className={labelClass} htmlFor="country">
-            Country
-          </label>
-          <input
-            id="country"
-            className={inputClass}
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            placeholder="United Kingdom"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className={labelClass} htmlFor="setlist">
-          Setlist{" "}
-          <span className="font-normal text-slate-400">(one song per line)</span>
-        </label>
-        <textarea
-          id="setlist"
-          className={`${inputClass} min-h-[96px] resize-y`}
-          value={setlist}
-          onChange={(e) => setSetlist(e.target.value)}
-          placeholder={"The Chain\nDreams\nGo Your Own Way"}
-        />
-      </div>
-
-      <div>
-        <label className={labelClass} htmlFor="notes">
-          Notes
-        </label>
-        <input
-          id="notes"
-          className={inputClass}
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Who you went with, memories…"
-        />
-      </div>
-
-      {error && (
+      {/* Errors that occur before the detail fields are shown (search/import). */}
+      {!showDetails && error && (
         <p className="text-sm text-red-600" role="alert">
           {error}
         </p>
       )}
-
-      <button
-        type="submit"
-        disabled={busy}
-        className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:opacity-60"
-      >
-        {busy ? "Finding location & saving…" : "Add show"}
-      </button>
-      <p className="text-center text-xs text-slate-400">
-        We&apos;ll look up the venue&apos;s coordinates to place your pin.
-      </p>
     </form>
+  );
+}
+
+function SearchIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  );
+}
+
+function LinkIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5" />
+      <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5" />
+    </svg>
+  );
+}
+
+function PencilIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
   );
 }
