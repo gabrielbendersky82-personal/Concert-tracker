@@ -51,6 +51,29 @@ function PinGlyph() {
   );
 }
 
+function ArtistAvatar({ name, hue }: { name: string; hue: string }) {
+  const [failed, setFailed] = useState(false);
+  const initial = (name || "?").charAt(0).toUpperCase();
+  return (
+    <span
+      className="relative grid h-9 w-9 place-items-center overflow-hidden rounded-full text-xs font-bold text-white shadow ring-4 ring-slate-50"
+      style={{ background: hue }}
+    >
+      {initial}
+      {!failed && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/api/artist-image?name=${encodeURIComponent(name)}`}
+          alt=""
+          loading="lazy"
+          onError={() => setFailed(true)}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      )}
+    </span>
+  );
+}
+
 function ShowCard({ show, hue }: { show: Show; hue: string }) {
   const location =
     [show.city, show.country].filter(Boolean).join(", ") || show.venue || "—";
@@ -92,15 +115,11 @@ function Row({
   hue: string;
   side: boolean; // true = right (desktop)
 }) {
-  const initial = (show.artist || "?").charAt(0).toUpperCase();
   return (
     <div className="tl-reveal relative mb-5 pl-12 md:pl-0">
-      <span
-        className="absolute left-[22px] top-3 z-10 grid h-9 w-9 -translate-x-1/2 place-items-center rounded-full text-xs font-bold text-white shadow ring-4 ring-slate-50 md:left-1/2"
-        style={{ background: hue }}
-      >
-        {initial}
-      </span>
+      <div className="absolute left-[22px] top-3 z-10 -translate-x-1/2 md:left-1/2">
+        <ArtistAvatar name={show.artist} hue={hue} />
+      </div>
       <div className={`md:w-[calc(50%-1.75rem)] ${side ? "md:ml-auto" : ""}`}>
         <ShowCard show={show} hue={hue} />
       </div>
