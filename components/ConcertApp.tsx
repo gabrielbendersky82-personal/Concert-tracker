@@ -173,10 +173,16 @@ export default function ConcertApp({ userEmail }: { userEmail: string }) {
               </p>
             </div>
           </button>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
+            <Link
+              href="/timeline"
+              className="rounded-lg px-2 py-1.5 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50"
+            >
+              Timeline
+            </Link>
             <Link
               href="/friends"
-              className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50"
+              className="rounded-lg px-2 py-1.5 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50"
             >
               Friends
             </Link>
