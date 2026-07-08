@@ -42,7 +42,12 @@ export async function createProfile(
 
   if (error) {
     if (error.code === "23505") throw new Error("That handle is already taken.");
-    throw error;
+    if (error.code === "42P01") {
+      throw new Error(
+        "The profiles table doesn't exist yet — run the 0002_social.sql migration in Supabase."
+      );
+    }
+    throw new Error(error.message || "Could not save your profile.");
   }
   return data as Profile;
 }
