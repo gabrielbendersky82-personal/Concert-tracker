@@ -8,6 +8,7 @@ import {
   searchSetlistFm,
   type SetlistFmResult,
 } from "@/lib/shows";
+import { addShowVideo, uploadShowPhoto } from "@/lib/media";
 
 const inputClass =
   "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
@@ -37,6 +38,8 @@ export default function AddShowForm({
   const [date, setDate] = useState("");
   const [setlist, setSetlist] = useState("");
   const [notes, setNotes] = useState("");
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [videoLinks, setVideoLinks] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -73,6 +76,8 @@ export default function AddShowForm({
     setDate("");
     setSetlist("");
     setNotes("");
+    setPhotos([]);
+    setVideoLinks("");
     setImportUrl("");
     setImportNote("");
     setImportedCoords(null);
@@ -187,7 +192,7 @@ export default function AddShowForm({
         }
       }
 
-      await createShow({
+      const showId = await createShow({
         artist,
         venue,
         city,
@@ -198,6 +203,20 @@ export default function AddShowForm({
         latitude: lat,
         longitude: lon,
       });
+
+      // Attach any photos / videos to the new show (best-effort: the show is
+      // already saved, so a media hiccup shouldn't block the success flow).
+      try {
+        for (const file of photos) await uploadShowPhoto(showId, file);
+        for (const link of videoLinks
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean)) {
+          await addShowVideo(showId, link);
+        }
+      } catch {
+        /* media is optional; ignore individual failures */
+      }
 
       reset();
       await onCreated();
@@ -454,6 +473,47 @@ export default function AddShowForm({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Who you went with, memories…"
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              Photos{" "}
+              <span className="font-normal text-slate-400">(optional)</span>
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => setPhotos(Array.from(e.target.files ?? []))}
+              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
+            />
+            {photos.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {photos.map((f, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={i}
+                    src={URL.createObjectURL(f)}
+                    alt=""
+                    className="h-14 w-14 rounded-md object-cover ring-1 ring-slate-200"
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="videos">
+              YouTube videos{" "}
+              <span className="font-normal text-slate-400">(one link per line)</span>
+            </label>
+            <textarea
+              id="videos"
+              className={`${inputClass} min-h-[60px] resize-y`}
+              value={videoLinks}
+              onChange={(e) => setVideoLinks(e.target.value)}
+              placeholder={"https://youtu.be/…"}
             />
           </div>
 

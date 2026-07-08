@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { bulkCreateShows, deleteShow, fetchShows } from "@/lib/shows";
+import { addShowVideo, deleteShowMedia, uploadShowPhoto } from "@/lib/media";
 import { SAMPLE_SHOWS } from "@/lib/sampleShows";
-import type { Show } from "@/lib/types";
+import type { Show, ShowMedia } from "@/lib/types";
 import AddShowForm from "./AddShowForm";
 import StatsPanel from "./StatsPanel";
 import ShowDetail from "./ShowDetail";
@@ -106,6 +107,21 @@ export default function ConcertApp({
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not delete show.");
     }
+  }
+
+  async function handleAddPhotos(showId: string, files: File[]) {
+    for (const file of files) await uploadShowPhoto(showId, file);
+    await load();
+  }
+
+  async function handleAddVideo(showId: string, url: string) {
+    await addShowVideo(showId, url);
+    await load();
+  }
+
+  async function handleDeleteMedia(m: ShowMedia) {
+    await deleteShowMedia(m);
+    await load();
   }
 
   async function handleSeed() {
@@ -258,6 +274,9 @@ export default function ConcertApp({
               show={selectedShow}
               onClose={() => setSelectedId(null)}
               onDelete={readOnly ? undefined : handleDelete}
+              onAddPhotos={readOnly ? undefined : handleAddPhotos}
+              onAddVideo={readOnly ? undefined : handleAddVideo}
+              onDeleteMedia={readOnly ? undefined : handleDeleteMedia}
             />
           </div>
         ) : (

@@ -5,6 +5,19 @@ export interface SetlistSong {
   title: string;
 }
 
+export interface ShowMedia {
+  id: string;
+  show_id: string;
+  kind: "photo" | "video";
+  storage_path: string | null;
+  youtube_id: string | null;
+  caption: string | null;
+  position: number;
+  created_at?: string;
+  /** Direct URL, used only by the in-memory demo dataset. */
+  url?: string;
+}
+
 export interface Show {
   id: string;
   user_id: string;
@@ -18,6 +31,7 @@ export interface Show {
   notes: string | null;
   created_at: string;
   setlist_songs: SetlistSong[];
+  show_media?: ShowMedia[];
 }
 
 export interface Profile {

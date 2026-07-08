@@ -6,17 +6,12 @@ export async function fetchShows(): Promise<Show[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("shows")
-    .select("*, setlist_songs(*)")
+    .select("*, setlist_songs(*), show_media(*)")
     .order("show_date", { ascending: false });
 
   if (error) throw error;
 
-  return (data ?? []).map((show) => ({
-    ...show,
-    setlist_songs: [...(show.setlist_songs ?? [])].sort(
-      (a, b) => a.position - b.position
-    ),
-  })) as Show[];
+  return (data ?? []).map(sortShowRelations) as Show[];
 }
 
 /** Fetch a specific user's shows (RLS permits this only for accepted friends). */
@@ -24,18 +19,29 @@ export async function fetchShowsFor(userId: string): Promise<Show[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("shows")
-    .select("*, setlist_songs(*)")
+    .select("*, setlist_songs(*), show_media(*)")
     .eq("user_id", userId)
     .order("show_date", { ascending: false });
 
   if (error) throw error;
 
-  return (data ?? []).map((show) => ({
+  return (data ?? []).map(sortShowRelations) as Show[];
+}
+
+/** Sort a show's setlist songs and media by position. */
+function sortShowRelations(show: {
+  setlist_songs?: { position: number }[];
+  show_media?: { position: number }[];
+}) {
+  return {
     ...show,
     setlist_songs: [...(show.setlist_songs ?? [])].sort(
       (a, b) => a.position - b.position
     ),
-  })) as Show[];
+    show_media: [...(show.show_media ?? [])].sort(
+      (a, b) => a.position - b.position
+    ),
+  };
 }
 
 /** Insert one show plus its setlist songs. Returns the new show id. */

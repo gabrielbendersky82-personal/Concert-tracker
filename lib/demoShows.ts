@@ -16,6 +16,8 @@ interface DemoSeed {
   latitude: number;
   longitude: number;
   setlist: string[];
+  photos?: string[]; // external image URLs (demo only)
+  videos?: string[]; // YouTube ids
 }
 
 const SEED: DemoSeed[] = [
@@ -28,6 +30,11 @@ const SEED: DemoSeed[] = [
     latitude: 40.7505,
     longitude: -73.9934,
     setlist: ["Burn the Witch", "Daydreaming", "Lucky", "Karma Police", "Idioteque", "Paranoid Android"],
+    photos: [
+      "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80",
+      "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&q=80",
+    ],
+    videos: ["1uYWYWPc9HU"],
   },
   {
     artist: "Beyoncé",
@@ -38,6 +45,10 @@ const SEED: DemoSeed[] = [
     latitude: 51.556,
     longitude: -0.2796,
     setlist: ["Formation", "Sorry", "Hold Up", "Crazy in Love", "Halo"],
+    photos: [
+      "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80",
+    ],
+    videos: ["bnVUHWCynig"],
   },
   {
     artist: "Kendrick Lamar",
@@ -128,6 +139,7 @@ const SEED: DemoSeed[] = [
     latitude: 40.8135,
     longitude: -74.0745,
     setlist: ["Take My Breath", "Blinding Lights", "Save Your Tears", "Starboy", "The Hills"],
+    videos: ["4NRXx6U8ABQ"],
   },
   {
     artist: "Blur",
@@ -183,6 +195,27 @@ const SEED: DemoSeed[] = [
 
 export const DEMO_SHOWS: Show[] = SEED.map((s, i) => {
   const id = `demo-${i + 1}`;
+  const media = [
+    ...(s.photos ?? []).map((url, j) => ({
+      id: `${id}-photo-${j + 1}`,
+      show_id: id,
+      kind: "photo" as const,
+      storage_path: null,
+      youtube_id: null,
+      caption: null,
+      position: j,
+      url,
+    })),
+    ...(s.videos ?? []).map((vid, j) => ({
+      id: `${id}-video-${j + 1}`,
+      show_id: id,
+      kind: "video" as const,
+      storage_path: null,
+      youtube_id: vid,
+      caption: null,
+      position: (s.photos?.length ?? 0) + j,
+    })),
+  ];
   return {
     id,
     user_id: "demo",
@@ -201,6 +234,7 @@ export const DEMO_SHOWS: Show[] = SEED.map((s, i) => {
       position: j + 1,
       title,
     })),
+    show_media: media,
   };
 });
 

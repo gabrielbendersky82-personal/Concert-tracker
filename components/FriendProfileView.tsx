@@ -14,6 +14,7 @@ import { findMutual } from "@/lib/mutual";
 import { setProfileVisibility } from "@/lib/profiles";
 import AppNav from "./AppNav";
 import GuestBar from "./GuestBar";
+import ShowDetail from "./ShowDetail";
 import type { FriendState, Profile, Show } from "@/lib/types";
 
 const MapView = dynamic(() => import("./MapView"), {
@@ -90,6 +91,10 @@ export default function FriendProfileView({
     [isSelf, guest, myShows, theirShows]
   );
   const stats = useMemo(() => computeStats(theirShows), [theirShows]);
+  const selectedShow = useMemo(
+    () => theirShows.find((s) => s.id === selectedId) ?? null,
+    [theirShows, selectedId]
+  );
 
   async function action(fn: () => Promise<void>) {
     setBusy(true);
@@ -328,6 +333,16 @@ export default function FriendProfileView({
                 />
               )}
             </div>
+
+            {/* Detail for a clicked pin — read-only (photos, videos, setlist). */}
+            {selectedShow && (
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
+                <ShowDetail
+                  show={selectedShow}
+                  onClose={() => setSelectedId(null)}
+                />
+              </div>
+            )}
           </>
         )}
       </div>
