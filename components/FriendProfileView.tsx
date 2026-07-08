@@ -11,7 +11,9 @@ import {
 } from "@/lib/friends";
 import { computeStats } from "@/lib/stats";
 import { findMutual } from "@/lib/mutual";
+import { setProfileVisibility } from "@/lib/profiles";
 import AppNav from "./AppNav";
+import GuestBar from "./GuestBar";
 import type { FriendState, Profile, Show } from "@/lib/types";
 
 const MapView = dynamic(() => import("./MapView"), {
@@ -35,10 +37,12 @@ export default function FriendProfileView({
   profile,
   isSelf,
   myHandle,
+  guest = false,
 }: {
   profile: Profile;
   isSelf: boolean;
-  myHandle: string;
+  myHandle: string | null;
+  guest?: boolean;
 }) {
   const [state, setState] = useState<FriendState>(isSelf ? "self" : "none");
   const [theirShows, setTheirShows] = useState<Show[]>([]);
@@ -46,15 +50,24 @@ export default function FriendProfileView({
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [isPublic, setIsPublic] = useState(!!profile.is_public);
+  const [savingVis, setSavingVis] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const canView = state === "accepted" || state === "self";
+  const canView = isSelf || state === "accepted" || isPublic;
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      // Logged-out visitor: RLS only returns rows for public profiles.
+      if (guest) {
+        setState("none");
+        if (profile.is_public) setTheirShows(await fetchShowsFor(profile.id));
+        return;
+      }
       const s = isSelf ? "self" : await friendStateWith(profile.id);
       setState(s);
-      if (s === "accepted" || s === "self") {
+      if (s === "accepted" || s === "self" || profile.is_public) {
         const [theirs, mine] = await Promise.all([
           fetchShowsFor(profile.id),
           fetchShows(),
@@ -65,7 +78,7 @@ export default function FriendProfileView({
     } finally {
       setLoading(false);
     }
-  }, [isSelf, profile.id]);
+  }, [guest, isSelf, profile.id, profile.is_public]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -73,8 +86,8 @@ export default function FriendProfileView({
   }, [load]);
 
   const mutual = useMemo(
-    () => (isSelf ? [] : findMutual(myShows, theirShows)),
-    [isSelf, myShows, theirShows]
+    () => (isSelf || guest ? [] : findMutual(myShows, theirShows)),
+    [isSelf, guest, myShows, theirShows]
   );
   const stats = useMemo(() => computeStats(theirShows), [theirShows]);
 
@@ -85,6 +98,29 @@ export default function FriendProfileView({
       await load();
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function toggleVisibility() {
+    const next = !isPublic;
+    setSavingVis(true);
+    try {
+      await setProfileVisibility(next);
+      setIsPublic(next);
+    } finally {
+      setSavingVis(false);
+    }
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(
+        `${window.location.origin}/u/${profile.handle}`
+      );
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable */
     }
   }
 
@@ -140,7 +176,11 @@ export default function FriendProfileView({
 
   return (
     <main className="min-h-dvh bg-slate-50">
-      <AppNav active="friends" handle={myHandle} />
+      {guest || !myHandle ? (
+        <GuestBar />
+      ) : (
+        <AppNav active="friends" handle={myHandle} />
+      )}
       <div className="mx-auto max-w-5xl px-4 py-8 pb-24 sm:px-6 md:pb-8">
         {/* Profile header */}
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-5">
@@ -155,8 +195,49 @@ export default function FriendProfileView({
               <p className="text-sm text-slate-400">@{profile.handle}</p>
             </div>
           </div>
-          {!isSelf && stateAction()}
+          {!isSelf && !guest && stateAction()}
         </div>
+
+        {/* Own-profile sharing controls */}
+        {isSelf && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <div>
+              <p className="text-sm font-medium text-slate-800">
+                {isPublic ? "Your profile is public" : "Your profile is private"}
+              </p>
+              <p className="text-xs text-slate-500">
+                {isPublic
+                  ? "Anyone with the link can view your map — no account needed."
+                  : "Only accepted friends can see your shows."}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {isPublic && (
+                <button
+                  onClick={copyLink}
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                >
+                  {copied ? "Copied!" : "Copy share link"}
+                </button>
+              )}
+              <button
+                onClick={toggleVisibility}
+                disabled={savingVis}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-60 ${
+                  isPublic
+                    ? "bg-slate-600 hover:bg-slate-700"
+                    : "bg-indigo-600 hover:bg-indigo-700"
+                }`}
+              >
+                {savingVis
+                  ? "Saving…"
+                  : isPublic
+                  ? "Make private"
+                  : "Make public"}
+              </button>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <p className="mt-6 text-sm text-slate-400">Loading…</p>
@@ -179,7 +260,7 @@ export default function FriendProfileView({
         ) : (
           <>
             {/* Mutual concerts */}
-            {!isSelf && (
+            {!isSelf && !guest && (
               <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
                 <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                   Concerts in common ({mutual.length})

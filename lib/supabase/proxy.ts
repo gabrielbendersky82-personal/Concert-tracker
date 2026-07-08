@@ -38,8 +38,15 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+  // Routes reachable without signing in: auth pages, the read-only demo, public
+  // profiles (`/u/...`, gated per-profile by RLS), and the artist-image proxy
+  // used by the demo timeline.
   const isPublic =
-    pathname.startsWith("/login") || pathname.startsWith("/auth");
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/demo") ||
+    pathname.startsWith("/u/") ||
+    pathname.startsWith("/api/artist-image");
 
   if (!user && !isPublic) {
     const redirectUrl = request.nextUrl.clone();

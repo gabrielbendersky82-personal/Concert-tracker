@@ -52,6 +52,20 @@ export async function createProfile(
   return data as Profile;
 }
 
+/** Toggle whether the signed-in user's profile is publicly viewable. */
+export async function setProfileVisibility(isPublic: boolean): Promise<void> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be signed in.");
+  const { error } = await supabase
+    .from("profiles")
+    .update({ is_public: isPublic })
+    .eq("id", user.id);
+  if (error) throw error;
+}
+
 /** Search profiles by handle fragment (excludes yourself). */
 export async function searchProfiles(query: string): Promise<Profile[]> {
   const supabase = createClient();

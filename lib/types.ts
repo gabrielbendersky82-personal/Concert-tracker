@@ -24,6 +24,7 @@ export interface Profile {
   id: string;
   handle: string;
   display_name: string | null;
+  is_public?: boolean;
   created_at?: string;
 }
 

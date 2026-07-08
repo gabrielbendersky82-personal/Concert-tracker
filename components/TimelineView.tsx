@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import AppNav from "./AppNav";
+import GuestBar from "./GuestBar";
 import type { Show } from "@/lib/types";
 
 // Decorative circle hues (not data encoding — a fun, varied look).
@@ -130,9 +131,11 @@ function Row({
 export default function TimelineView({
   shows,
   handle,
+  guest = false,
 }: {
   shows: Show[];
   handle: string;
+  guest?: boolean;
 }) {
   const captureRef = useRef<HTMLDivElement>(null);
   const [capturing, setCapturing] = useState(false);
@@ -250,7 +253,15 @@ export default function TimelineView({
   return (
     <main className="min-h-dvh bg-slate-50">
       <style>{CSS}</style>
-      <AppNav active="timeline" handle={handle} />
+      {guest ? (
+        <GuestBar
+          active="timeline"
+          showSections
+          notice="You're exploring a live demo — sign in to build your own."
+        />
+      ) : (
+        <AppNav active="timeline" handle={handle} />
+      )}
       <div className="mx-auto max-w-3xl px-4 py-8 pb-24 sm:px-6 md:pb-10">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>

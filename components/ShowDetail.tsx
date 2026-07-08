@@ -19,7 +19,7 @@ export default function ShowDetail({
 }: {
   show: Show;
   onClose: () => void;
-  onDelete: (id: string) => void | Promise<void>;
+  onDelete?: (id: string) => void | Promise<void>;
 }) {
   return (
     <div className="flex h-full flex-col">
@@ -82,12 +82,14 @@ export default function ShowDetail({
         )}
       </div>
 
-      <button
-        onClick={() => onDelete(show.id)}
-        className="mt-4 w-full rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
-      >
-        Delete show
-      </button>
+      {onDelete && (
+        <button
+          onClick={() => onDelete(show.id)}
+          className="mt-4 w-full rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+        >
+          Delete show
+        </button>
+      )}
     </div>
   );
 }

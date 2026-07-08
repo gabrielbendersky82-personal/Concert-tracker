@@ -30,14 +30,33 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "data", label: "Data" },
 ];
 
-export default function ConcertApp({ handle }: { handle: string }) {
-  const [shows, setShows] = useState<Show[]>([]);
-  const [loading, setLoading] = useState(true);
+// Demo (logged-out) section nav — points at the public /demo routes.
+const DEMO_NAV: { id: "map" | "timeline" | "dashboard"; href: string }[] = [
+  { id: "map", href: "/demo" },
+  { id: "timeline", href: "/demo/timeline" },
+  { id: "dashboard", href: "/demo/dashboard" },
+];
+
+export default function ConcertApp({
+  handle,
+  readOnly = false,
+  initialShows,
+}: {
+  handle: string;
+  readOnly?: boolean;
+  initialShows?: Show[];
+}) {
+  const [shows, setShows] = useState<Show[]>(initialShows ?? []);
+  const [loading, setLoading] = useState(!readOnly);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<Tab>("add");
+  const [tab, setTab] = useState<Tab>(readOnly ? "shows" : "add");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [seeding, setSeeding] = useState(false);
+
+  const visibleTabs = readOnly
+    ? TABS.filter((t) => t.id === "shows" || t.id === "stats")
+    : TABS;
 
   const load = useCallback(async () => {
     try {
@@ -56,11 +75,13 @@ export default function ConcertApp({ handle }: { handle: string }) {
   }, []);
 
   useEffect(() => {
+    // Read-only demo renders provided shows; skip the authenticated fetch.
+    if (readOnly) return;
     // Fetch the user's shows on mount. State only updates after the awaited
     // fetch resolves, so this is a genuine external-sync effect.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
-  }, [load]);
+  }, [load, readOnly]);
 
   const selectedShow = useMemo(
     () => shows.find((s) => s.id === selectedId) ?? null,
@@ -144,7 +165,27 @@ export default function ConcertApp({ handle }: { handle: string }) {
       </div>
 
       {/* Mobile bottom tab bar (sits below the sheet) */}
-      <BottomTabs active="map" position="absolute" />
+      {readOnly ? (
+        <nav className="absolute inset-x-0 bottom-0 z-40 flex border-t border-slate-200 bg-white/95 backdrop-blur md:hidden">
+          {DEMO_NAV.map((s) => {
+            const on = s.id === "map";
+            return (
+              <Link
+                key={s.id}
+                href={s.href}
+                className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium capitalize transition ${
+                  on ? "text-indigo-600" : "text-slate-400 hover:text-slate-600"
+                }`}
+              >
+                <NavIcon id={s.id} className="h-5 w-5" />
+                {s.id}
+              </Link>
+            );
+          })}
+        </nav>
+      ) : (
+        <BottomTabs active="map" position="absolute" />
+      )}
 
       {/* Sidebar / bottom sheet */}
       <aside
@@ -166,19 +207,20 @@ export default function ConcertApp({ handle }: { handle: string }) {
                 Concert Map
               </h1>
               <p className="truncate text-xs leading-tight text-slate-400">
-                {shows.length} show{shows.length === 1 ? "" : "s"} · @{handle}
+                {shows.length} show{shows.length === 1 ? "" : "s"} ·{" "}
+                {readOnly ? "Live demo" : `@${handle}`}
               </p>
             </div>
           </button>
           <div className="flex items-center gap-1">
             <nav className="hidden items-center gap-0.5 md:flex">
-              {SECTIONS.map((s) => {
+              {(readOnly ? DEMO_NAV : SECTIONS).map((s) => {
                 const on = s.id === "map";
                 return (
                   <Link
                     key={s.id}
                     href={s.href}
-                    title={s.label}
+                    title={s.id}
                     className={`grid h-8 w-8 place-items-center rounded-lg transition ${
                       on
                         ? "bg-indigo-50 text-indigo-700"
@@ -190,7 +232,16 @@ export default function ConcertApp({ handle }: { handle: string }) {
                 );
               })}
             </nav>
-            <AccountMenu handle={handle} />
+            {readOnly ? (
+              <Link
+                href="/login"
+                className="rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
+              >
+                Sign in
+              </Link>
+            ) : (
+              <AccountMenu handle={handle} />
+            )}
             <button
               onClick={() => setSheetOpen((o) => !o)}
               className="px-1 text-slate-400 md:hidden"
@@ -206,14 +257,14 @@ export default function ConcertApp({ handle }: { handle: string }) {
             <ShowDetail
               show={selectedShow}
               onClose={() => setSelectedId(null)}
-              onDelete={handleDelete}
+              onDelete={readOnly ? undefined : handleDelete}
             />
           </div>
         ) : (
           <>
             {/* Tabs */}
             <div className="flex gap-1 border-t border-slate-100 px-3 py-2">
-              {TABS.map((t) => (
+              {visibleTabs.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => {

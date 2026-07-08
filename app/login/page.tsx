@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 type Mode = "password" | "magic";
@@ -86,7 +87,7 @@ export default function LoginPage() {
   const magicSent = mode === "magic" && status === "sent";
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-slate-50 px-4">
+    <main className="flex min-h-dvh flex-col items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-6 text-center">
           <div className="mb-2 text-3xl" aria-hidden>
@@ -230,6 +231,16 @@ export default function LoginPage() {
           </form>
         )}
       </div>
+
+      <p className="mt-5 text-center text-sm text-slate-500">
+        Just looking around?{" "}
+        <Link
+          href="/demo"
+          className="font-medium text-indigo-600 hover:text-indigo-700"
+        >
+          Explore the live demo →
+        </Link>
+      </p>
     </main>
   );
 }

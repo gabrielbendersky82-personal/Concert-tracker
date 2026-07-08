@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { DashboardData } from "@/lib/stats";
 import AppNav from "./AppNav";
+import GuestBar from "./GuestBar";
 import {
   AreaLine,
   Card,
@@ -13,15 +14,25 @@ import {
 export default function DashboardView({
   data,
   handle,
+  guest = false,
 }: {
   data: DashboardData;
   handle: string;
+  guest?: boolean;
 }) {
   const empty = data.totalShows === 0;
 
   return (
     <main className="min-h-dvh bg-slate-50">
-      <AppNav active="dashboard" handle={handle} />
+      {guest ? (
+        <GuestBar
+          active="dashboard"
+          showSections
+          notice="You're exploring a live demo — sign in to build your own."
+        />
+      ) : (
+        <AppNav active="dashboard" handle={handle} />
+      )}
       <div className="mx-auto max-w-6xl px-4 py-8 pb-24 sm:px-6 md:pb-8">
         {/* Header */}
         <div className="mb-6">
