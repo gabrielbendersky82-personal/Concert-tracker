@@ -17,7 +17,7 @@ export default async function UserProfilePage({
 
   const { data: mine } = await supabase
     .from("profiles")
-    .select("id")
+    .select("id, handle")
     .eq("id", user.id)
     .maybeSingle();
   if (!mine) redirect("/welcome");
@@ -33,6 +33,7 @@ export default async function UserProfilePage({
     <FriendProfileView
       profile={profile as Profile}
       isSelf={(profile as Profile).id === user.id}
+      myHandle={mine.handle}
     />
   );
 }

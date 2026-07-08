@@ -14,6 +14,13 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("handle")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!profile) redirect("/welcome");
+
   const { data } = await supabase
     .from("shows")
     .select("*, setlist_songs(*)")
@@ -22,5 +29,5 @@ export default async function DashboardPage() {
   const shows = (data ?? []) as Show[];
   const dashboard = computeDashboard(shows);
 
-  return <DashboardView data={dashboard} email={user.email ?? "you"} />;
+  return <DashboardView data={dashboard} handle={profile.handle} />;
 }

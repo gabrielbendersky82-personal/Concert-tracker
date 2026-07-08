@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { fetchShows, fetchShowsFor } from "@/lib/shows";
 import {
   acceptRequest,
@@ -12,6 +11,7 @@ import {
 } from "@/lib/friends";
 import { computeStats } from "@/lib/stats";
 import { findMutual } from "@/lib/mutual";
+import AppNav from "./AppNav";
 import type { FriendState, Profile, Show } from "@/lib/types";
 
 const MapView = dynamic(() => import("./MapView"), {
@@ -34,9 +34,11 @@ function fmtDate(iso: string): string {
 export default function FriendProfileView({
   profile,
   isSelf,
+  myHandle,
 }: {
   profile: Profile;
   isSelf: boolean;
+  myHandle: string;
 }) {
   const [state, setState] = useState<FriendState>(isSelf ? "self" : "none");
   const [theirShows, setTheirShows] = useState<Show[]>([]);
@@ -138,14 +140,8 @@ export default function FriendProfileView({
 
   return (
     <main className="min-h-dvh bg-slate-50">
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-        <Link
-          href="/friends"
-          className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
-        >
-          ← Friends
-        </Link>
-
+      <AppNav active="friends" handle={myHandle} />
+      <div className="mx-auto max-w-5xl px-4 py-8 pb-24 sm:px-6 md:pb-8">
         {/* Profile header */}
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-5">
           <div className="flex items-center gap-3">

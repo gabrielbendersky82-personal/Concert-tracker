@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import AppNav from "./AppNav";
 import type { Show } from "@/lib/types";
 
 const ITEM_W = 180;
@@ -180,14 +181,8 @@ export default function TimelineView({
   return (
     <main className="min-h-dvh bg-slate-50">
       <style>{CSS}</style>
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <Link
-          href="/"
-          className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
-        >
-          ← Back to map
-        </Link>
-
+      <AppNav active="timeline" handle={handle} />
+      <div className="mx-auto max-w-6xl px-4 py-8 pb-24 sm:px-6 md:pb-8">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">

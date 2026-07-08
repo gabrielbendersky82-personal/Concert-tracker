@@ -10,6 +10,7 @@ import {
   type FriendGraph,
 } from "@/lib/friends";
 import { searchProfiles } from "@/lib/profiles";
+import AppNav from "./AppNav";
 import type { Profile } from "@/lib/types";
 
 function Avatar({ profile }: { profile: Profile }) {
@@ -125,13 +126,8 @@ export default function FriendsView({
 
   return (
     <main className="min-h-dvh bg-slate-50">
-      <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-        <Link
-          href="/"
-          className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
-        >
-          ← Back to map
-        </Link>
+      <AppNav active="friends" handle={myHandle} />
+      <div className="mx-auto max-w-2xl px-4 py-8 pb-24 sm:px-6 md:pb-8">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Friends</h1>
         <p className="mt-1 text-sm text-slate-500">
           You are <span className="font-medium text-slate-700">@{myHandle}</span>

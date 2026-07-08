@@ -16,7 +16,7 @@ export default async function Home() {
   // First-time users pick a handle before entering the app.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id")
+    .select("id, handle")
     .eq("id", user.id)
     .maybeSingle();
   if (!profile) {
@@ -33,7 +33,7 @@ export default async function Home() {
       {/* Map/app sheet. The hero above dissolves into #eef1f6 and the map fades
           in from the same colour, so there's no seam. */}
       <section id="app" className="h-dvh w-full bg-[#eef1f6]">
-        <ConcertApp userEmail={user.email ?? "you"} />
+        <ConcertApp handle={profile.handle} />
       </section>
     </main>
   );

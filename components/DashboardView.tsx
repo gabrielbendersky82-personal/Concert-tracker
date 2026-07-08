@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { DashboardData } from "@/lib/stats";
+import AppNav from "./AppNav";
 import {
   AreaLine,
   Card,
@@ -11,35 +12,27 @@ import {
 
 export default function DashboardView({
   data,
-  email,
+  handle,
 }: {
   data: DashboardData;
-  email: string;
+  handle: string;
 }) {
   const empty = data.totalShows === 0;
 
   return (
     <main className="min-h-dvh bg-slate-50">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <AppNav active="dashboard" handle={handle} />
+      <div className="mx-auto max-w-6xl px-4 py-8 pb-24 sm:px-6 md:pb-8">
         {/* Header */}
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <Link
-              href="/"
-              className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
-            >
-              ← Back to map
-            </Link>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              Your Concert Dashboard
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              {empty
-                ? "No shows logged yet."
-                : `${data.totalShows} show${data.totalShows === 1 ? "" : "s"} · ${data.uniqueArtists} artist${data.uniqueArtists === 1 ? "" : "s"} · ${data.uniqueCountries} countr${data.uniqueCountries === 1 ? "y" : "ies"}`}
-            </p>
-          </div>
-          <span className="text-xs text-slate-400">{email}</span>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            Your Concert Dashboard
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            {empty
+              ? "No shows logged yet."
+              : `${data.totalShows} show${data.totalShows === 1 ? "" : "s"} · ${data.uniqueArtists} artist${data.uniqueArtists === 1 ? "" : "s"} · ${data.uniqueCountries} countr${data.uniqueCountries === 1 ? "y" : "ies"}`}
+          </p>
         </div>
 
         {empty ? (

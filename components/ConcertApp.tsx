@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { bulkCreateShows, deleteShow, fetchShows } from "@/lib/shows";
 import { SAMPLE_SHOWS } from "@/lib/sampleShows";
 import type { Show } from "@/lib/types";
@@ -11,6 +10,7 @@ import AddShowForm from "./AddShowForm";
 import StatsPanel from "./StatsPanel";
 import ShowDetail from "./ShowDetail";
 import ImportExport from "./ImportExport";
+import { AccountMenu, BottomTabs, NavIcon, SECTIONS } from "./AppNav";
 
 const MapView = dynamic(() => import("./MapView"), {
   ssr: false,
@@ -30,7 +30,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "data", label: "Data" },
 ];
 
-export default function ConcertApp({ userEmail }: { userEmail: string }) {
+export default function ConcertApp({ handle }: { handle: string }) {
   const [shows, setShows] = useState<Show[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -100,12 +100,6 @@ export default function ConcertApp({ userEmail }: { userEmail: string }) {
     }
   }
 
-  async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.assign("/login");
-  }
-
   return (
     <div className="relative flex h-dvh w-full flex-col md:flex-row">
       {/* Map */}
@@ -149,43 +143,54 @@ export default function ConcertApp({ userEmail }: { userEmail: string }) {
         )}
       </div>
 
+      {/* Mobile bottom tab bar (sits below the sheet) */}
+      <BottomTabs active="map" position="absolute" />
+
       {/* Sidebar / bottom sheet */}
       <aside
-        className={`absolute inset-x-0 bottom-0 z-[1000] flex max-h-[82vh] flex-col rounded-t-2xl bg-white shadow-2xl transition-transform duration-300 md:static md:h-full md:max-h-none md:w-[380px] md:translate-y-0 md:rounded-none md:border-l md:border-slate-200 md:shadow-none ${
+        className={`absolute inset-x-0 bottom-14 z-[1000] flex max-h-[78vh] flex-col rounded-t-2xl bg-white shadow-2xl transition-transform duration-300 md:static md:bottom-0 md:h-full md:max-h-none md:w-[380px] md:translate-y-0 md:rounded-none md:border-l md:border-slate-200 md:shadow-none ${
           sheetOpen ? "translate-y-0" : "translate-y-[calc(100%-3.75rem)]"
         } md:translate-y-0`}
       >
         {/* Header (tap title to toggle on mobile) */}
-        <div className="flex w-full items-center justify-between px-4 py-3">
+        <div className="flex w-full items-center justify-between gap-2 px-4 py-3">
           <button
             onClick={() => setSheetOpen((o) => !o)}
-            className="flex items-center gap-2 text-left md:cursor-default"
+            className="flex min-w-0 items-center gap-2 text-left md:cursor-default"
           >
             <span className="text-lg" aria-hidden>
               📍
             </span>
-            <div>
+            <div className="min-w-0">
               <h1 className="text-base font-semibold leading-tight text-slate-900">
                 Concert Map
               </h1>
-              <p className="text-xs leading-tight text-slate-400">
-                {shows.length} show{shows.length === 1 ? "" : "s"} · {userEmail}
+              <p className="truncate text-xs leading-tight text-slate-400">
+                {shows.length} show{shows.length === 1 ? "" : "s"} · @{handle}
               </p>
             </div>
           </button>
-          <div className="flex items-center gap-0.5">
-            <Link
-              href="/timeline"
-              className="rounded-lg px-2 py-1.5 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50"
-            >
-              Timeline
-            </Link>
-            <Link
-              href="/friends"
-              className="rounded-lg px-2 py-1.5 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50"
-            >
-              Friends
-            </Link>
+          <div className="flex items-center gap-1">
+            <nav className="hidden items-center gap-0.5 md:flex">
+              {SECTIONS.map((s) => {
+                const on = s.id === "map";
+                return (
+                  <Link
+                    key={s.id}
+                    href={s.href}
+                    title={s.label}
+                    className={`grid h-8 w-8 place-items-center rounded-lg transition ${
+                      on
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "text-slate-400 hover:bg-slate-50 hover:text-slate-700"
+                    }`}
+                  >
+                    <NavIcon id={s.id} className="h-[18px] w-[18px]" />
+                  </Link>
+                );
+              })}
+            </nav>
+            <AccountMenu handle={handle} />
             <button
               onClick={() => setSheetOpen((o) => !o)}
               className="px-1 text-slate-400 md:hidden"
@@ -243,18 +248,7 @@ export default function ConcertApp({ userEmail }: { userEmail: string }) {
                 />
               )}
 
-              {tab === "stats" && (
-                <div className="space-y-3">
-                  <Link
-                    href="/dashboard"
-                    className="flex items-center justify-between rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
-                  >
-                    Open full dashboard
-                    <span aria-hidden>→</span>
-                  </Link>
-                  <StatsPanel shows={shows} />
-                </div>
-              )}
+              {tab === "stats" && <StatsPanel shows={shows} />}
 
               {tab === "data" && (
                 <div className="space-y-4">
@@ -274,14 +268,6 @@ export default function ConcertApp({ userEmail }: { userEmail: string }) {
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
                     >
                       {seeding ? "Adding…" : "Load sample shows"}
-                    </button>
-                  </div>
-                  <div className="border-t border-slate-100 pt-4">
-                    <button
-                      onClick={handleSignOut}
-                      className="text-sm font-medium text-slate-500 hover:text-slate-700"
-                    >
-                      Sign out
                     </button>
                   </div>
                 </div>
