@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { useEffect, useMemo, useState } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { firstPhotoSrc } from "@/lib/media";
@@ -17,17 +24,25 @@ const TILE_URL = {
 
 // Custom SVG pin so we don't depend on Leaflet's bundled marker images.
 // `color` sets the fill (e.g. per-attendee); the selected pin is enlarged with a
-// white ring for emphasis.
-function pinIcon(color: string, active: boolean) {
+// white ring for emphasis. When `count` > 1 the pin head shows the number of
+// shows at that spot instead of the plain dot.
+function pinIcon(color: string, active: boolean, count = 1) {
   const w = active ? 38 : 30;
   const h = active ? 50 : 40;
+  const label = count > 99 ? "99+" : String(count);
+  const fontSize = label.length > 2 ? 6.5 : label.length > 1 ? 8 : 9.5;
+  const head =
+    count > 1
+      ? `<circle cx="12" cy="12" r="7" fill="white"/>
+      <text x="12" y="12" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="${fontSize}" font-weight="700" fill="${color}">${label}</text>`
+      : `<circle cx="12" cy="12" r="5" fill="white"/>`;
   return L.divIcon({
     className: "concert-pin",
     html: `<svg width="${w}" height="${h}" viewBox="0 0 24 32" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 0C5.4 0 0 5.4 0 12c0 8.4 12 20 12 20s12-11.6 12-20C24 5.4 18.6 0 12 0z" fill="${color}" stroke="${
         active ? "#ffffff" : "none"
       }" stroke-width="${active ? 1.5 : 0}"/>
-      <circle cx="12" cy="12" r="5" fill="white"/>
+      ${head}
     </svg>`,
     iconSize: [w, h],
     iconAnchor: [w / 2, h],
@@ -39,6 +54,107 @@ type MappableShow = Show & { latitude: number; longitude: number };
 
 function hasCoords(show: Show): show is MappableShow {
   return show.latitude != null && show.longitude != null;
+}
+
+// Shows that would render on top of each other collapse into one pin with a
+// count badge and a list popup, instead of stacking invisibly. Grouping is
+// zoom-aware (lightweight clustering): zoomed out, nearby venues in the same
+// city merge; zoomed in, only shows at the same venue share a pin. The cell
+// size targets ~40px of screen space at the given zoom.
+type PinGroup = {
+  key: string;
+  latitude: number;
+  longitude: number;
+  shows: MappableShow[];
+};
+
+function groupShows(shows: MappableShow[], zoom: number): PinGroup[] {
+  const cell = zoom >= 13 ? 0 : (40 * 360) / (256 * 2 ** zoom);
+  const keyOf = (s: MappableShow) =>
+    cell === 0
+      ? `${s.latitude.toFixed(5)},${s.longitude.toFixed(5)}`
+      : `${Math.round(s.latitude / cell)},${Math.round(s.longitude / cell)}`;
+
+  const groups = new Map<string, MappableShow[]>();
+  for (const s of shows) {
+    const key = keyOf(s);
+    const g = groups.get(key);
+    if (g) g.push(s);
+    else groups.set(key, [s]);
+  }
+  return [...groups.entries()].map(([key, members]) => {
+    // Latest show first inside each group; pin sits at the members' centroid.
+    members.sort((a, b) => b.show_date.localeCompare(a.show_date));
+    const lat =
+      members.reduce((sum, s) => sum + s.latitude, 0) / members.length;
+    const lng =
+      members.reduce((sum, s) => sum + s.longitude, 0) / members.length;
+    return { key, latitude: lat, longitude: lng, shows: members };
+  });
+}
+
+// Header for a multi-show popup: the venue if they all share one, else the
+// (majority) city, else a generic area label.
+function groupPlace(shows: MappableShow[]): string {
+  const venues = new Set(shows.map((s) => s.venue).filter(Boolean));
+  const cities = new Set(shows.map((s) => s.city).filter(Boolean));
+  if (venues.size === 1) {
+    return [
+      [...venues][0],
+      cities.size === 1 ? [...cities][0] : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }
+  if (cities.size === 1) return [...cities][0] as string;
+  if (cities.size > 1) {
+    // Most frequent city among the grouped shows.
+    const counts = new Map<string, number>();
+    for (const s of shows) {
+      if (!s.city) continue;
+      counts.set(s.city, (counts.get(s.city) ?? 0) + 1);
+    }
+    let best = "";
+    let n = 0;
+    for (const [c, k] of counts) {
+      if (k > n) {
+        n = k;
+        best = c;
+      }
+    }
+    return `${best} area`;
+  }
+  return "This area";
+}
+
+// Re-groups pins whenever the user zooms.
+function ZoomWatcher({ onZoom }: { onZoom: (zoom: number) => void }) {
+  const map = useMapEvents({
+    zoomend: () => onZoom(map.getZoom()),
+  });
+  return null;
+}
+
+// Pin color for a group: the most frequent attendee color among its shows.
+function groupColor(
+  shows: MappableShow[],
+  colorOf?: (show: Show) => string
+): string {
+  if (!colorOf) return "#e11d48";
+  const counts = new Map<string, number>();
+  for (const s of shows) {
+    const c = colorOf(s);
+    counts.set(c, (counts.get(c) ?? 0) + 1);
+  }
+  let best = "#e11d48";
+  let n = 0;
+  for (const [c, k] of counts) {
+    if (k > n) {
+      n = k;
+      best = c;
+    }
+  }
+  return best;
 }
 
 function FitBounds({ shows }: { shows: MappableShow[] }) {
@@ -84,8 +200,10 @@ export default function MapView({
   colorOf?: (show: Show) => string;
   legend?: { label: string; color: string }[];
 }) {
-  const mappable = shows.filter(hasCoords);
+  const [zoom, setZoom] = useState(2);
   const theme = useTheme();
+  const mappable = useMemo(() => shows.filter(hasCoords), [shows]);
+  const groups = useMemo(() => groupShows(mappable, zoom), [mappable, zoom]);
 
   return (
     <div className="relative h-full w-full">
@@ -106,35 +224,85 @@ export default function MapView({
         />
         <FitBounds shows={mappable} />
         <FlyToSelected shows={mappable} selectedId={selectedId} />
-        {mappable.map((show) => (
-          <Marker
-            key={show.id}
-            position={[show.latitude, show.longitude]}
-            icon={pinIcon(colorOf?.(show) ?? "#e11d48", show.id === selectedId)}
-            eventHandlers={{ click: () => onSelect(show.id) }}
-          >
-          <Popup>
-            <div className="w-44 text-sm">
-              {firstPhotoSrc(show) && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={firstPhotoSrc(show) as string}
-                  alt=""
-                  className="mb-1.5 h-24 w-full rounded-md object-cover"
-                />
+        <ZoomWatcher onZoom={setZoom} />
+        {groups.map((group) => {
+          const single = group.shows.length === 1;
+          const show = group.shows[0];
+          const active = group.shows.some((s) => s.id === selectedId);
+          const place = groupPlace(group.shows);
+          return (
+            <Marker
+              key={group.key}
+              position={[group.latitude, group.longitude]}
+              icon={pinIcon(
+                groupColor(group.shows, colorOf),
+                active,
+                group.shows.length
               )}
-              <div className="font-semibold text-ink">{show.artist}</div>
-              {show.venue && <div className="text-ink-2">{show.venue}</div>}
-              <div className="text-ink-2">
-                {[show.city, show.country].filter(Boolean).join(", ")}
-              </div>
-              <div className="mt-1 text-xs text-ink-3">
-                {show.show_date}
-              </div>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+              // Badged pins float above singles so counts never hide.
+              zIndexOffset={single ? 0 : 250}
+              eventHandlers={
+                single ? { click: () => onSelect(show.id) } : undefined
+              }
+            >
+              {single ? (
+                <Popup>
+                  <div className="w-44 text-sm">
+                    {firstPhotoSrc(show) && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={firstPhotoSrc(show) as string}
+                        alt=""
+                        className="mb-1.5 h-24 w-full rounded-md object-cover"
+                      />
+                    )}
+                    <div className="font-semibold text-ink">{show.artist}</div>
+                    {show.venue && <div className="text-ink-2">{show.venue}</div>}
+                    <div className="text-ink-2">
+                      {[show.city, show.country].filter(Boolean).join(", ")}
+                    </div>
+                    <div className="mt-1 text-xs text-ink-3">
+                      {show.show_date}
+                    </div>
+                  </div>
+                </Popup>
+              ) : (
+                <Popup>
+                  <div className="w-52 text-sm">
+                    <div className="font-semibold text-ink">{place}</div>
+                    <div className="mb-1.5 text-xs text-ink-3">
+                      {group.shows.length} shows here
+                    </div>
+                    <ul className="max-h-48 space-y-0.5 overflow-y-auto">
+                      {group.shows.map((s) => (
+                        <li key={s.id}>
+                          <button
+                            type="button"
+                            onClick={() => onSelect(s.id)}
+                            className="flex w-full items-center gap-1.5 rounded-md px-1 py-1 text-left transition hover:bg-raised"
+                          >
+                            {colorOf && (
+                              <span
+                                className="h-2 w-2 shrink-0 rounded-full"
+                                style={{ background: colorOf(s) }}
+                              />
+                            )}
+                            <span className="min-w-0 flex-1 truncate font-medium text-ink">
+                              {s.artist}
+                            </span>
+                            <span className="shrink-0 text-xs tabular-nums text-ink-3">
+                              {s.show_date.slice(0, 4)}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </Popup>
+              )}
+            </Marker>
+          );
+        })}
       </MapContainer>
 
       {legend && legend.length > 0 && (
