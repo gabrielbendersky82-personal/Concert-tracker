@@ -62,10 +62,10 @@ export default function Hero({
           className="mt-6 max-w-xl text-pretty text-base leading-relaxed text-white/80 sm:text-lg"
           style={{ textShadow: "0 1px 12px rgba(0,0,0,0.6)" }}
         >
-          Concert Map turns your gig history into a living map. Pin each concert
-          by venue, import setlists straight from setlist.fm, and watch your
-          stats add up — most-seen artists, cities and countries, and every song
-          you&apos;ve heard live.
+          Concerts are some of the best nights of our lives — Concert Map keeps
+          them all. Pin every show by venue, import setlists from setlist.fm, and
+          watch your stats add up. Then connect with friends to relive the gigs
+          you shared and discover where your live-music histories overlap.
         </p>
 
         <div className="mt-9 flex flex-col items-center gap-4">
