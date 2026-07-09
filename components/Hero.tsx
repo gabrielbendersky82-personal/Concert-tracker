@@ -56,11 +56,11 @@ export default function Hero({
           className="text-balance text-4xl font-semibold leading-[1.08] tracking-tight sm:text-6xl"
           style={{ textShadow: "0 2px 24px rgba(0,0,0,0.55)" }}
         >
-          Every show you&apos;ve ever seen, on one map.
+          Every show you and your friends have ever seen, on one map.
         </h1>
         <p
-          className="mt-6 max-w-xl text-pretty text-base leading-relaxed text-white/80 sm:text-lg"
-          style={{ textShadow: "0 1px 12px rgba(0,0,0,0.6)" }}
+          className="mt-6 max-w-xl text-pretty text-base font-semibold leading-relaxed text-white sm:text-lg"
+          style={{ textShadow: "0 2px 16px rgba(0,0,0,0.9), 0 1px 4px rgba(0,0,0,0.8)" }}
         >
           Concerts are some of the best nights of our lives — Concert Map keeps
           them all. Pin every show by venue, import setlists from setlist.fm, and
