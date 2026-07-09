@@ -1,4 +1,5 @@
 import Image from "next/image";
+import BrandMark from "./BrandMark";
 
 // Landing hero shown above the map after login: a full-bleed concert photo with
 // a dark scrim for legibility. Scroll (or the CTA) reveals the map/app below.
@@ -34,12 +35,7 @@ export default function Hero({
       {/* top bar */}
       <div className="relative z-10 flex items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
-          <span
-            className="grid h-8 w-8 place-items-center rounded-lg text-base"
-            style={{ background: "linear-gradient(150deg,#818cf8,#ec4899)" }}
-          >
-            📍
-          </span>
+          <BrandMark className="h-8 w-8" />
           <span className="text-sm font-semibold tracking-tight">Concert Map</span>
         </div>
         <span className="hidden text-xs text-white/60 sm:block">

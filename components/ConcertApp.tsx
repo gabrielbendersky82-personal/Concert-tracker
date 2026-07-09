@@ -11,6 +11,7 @@ import { SAMPLE_SHOWS } from "@/lib/sampleShows";
 import type { Show, ShowMedia } from "@/lib/types";
 import type { Attendee } from "@/lib/demoShows";
 import FriendsToggle from "./FriendsToggle";
+import BrandMark from "./BrandMark";
 import AddShowForm from "./AddShowForm";
 import StatsPanel from "./StatsPanel";
 import ShowDetail from "./ShowDetail";
@@ -261,9 +262,7 @@ export default function ConcertApp({
             onClick={() => setSheetOpen((o) => !o)}
             className="flex min-w-0 items-center gap-2 text-left md:cursor-default"
           >
-            <span className="text-lg" aria-hidden>
-              📍
-            </span>
+            <BrandMark className="h-7 w-7" />
             <div className="min-w-0">
               <h1 className="text-base font-semibold leading-tight text-slate-900">
                 Concert Map

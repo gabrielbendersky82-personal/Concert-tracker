@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import BrandMark from "@/components/BrandMark";
 
 type Mode = "password" | "magic";
 type Status = "idle" | "working" | "sent" | "error";
@@ -94,8 +95,8 @@ export default function LoginPage() {
         <Backdrop />
         <div className="relative z-10 w-full max-w-2xl">
           <div className="mb-8 text-center">
-            <div className="mb-2 text-4xl" aria-hidden>
-              📍🎶
+            <div className="mb-3 flex justify-center">
+              <BrandMark className="h-16 w-16" rounded="rounded-2xl" />
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
               Concert Map
@@ -163,8 +164,8 @@ export default function LoginPage() {
           <span aria-hidden>←</span> Back
         </button>
         <div className="mb-6 text-center">
-          <div className="mb-2 text-3xl" aria-hidden>
-            📍🎶
+          <div className="mb-3 flex justify-center">
+            <BrandMark className="h-12 w-12" rounded="rounded-xl" />
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
             Concert Map

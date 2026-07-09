@@ -5,6 +5,7 @@ import Link from "next/link";
 import AppNav from "./AppNav";
 import GuestBar from "./GuestBar";
 import FriendsToggle from "./FriendsToggle";
+import BrandMark from "./BrandMark";
 import { firstPhotoSrc } from "@/lib/media";
 import type { Show } from "@/lib/types";
 
@@ -366,12 +367,7 @@ export default function TimelineView({
             }`}
           >
             <div className="mb-2 flex items-center gap-2">
-              <span
-                className="grid h-7 w-7 place-items-center rounded-lg text-sm"
-                style={{ background: "linear-gradient(150deg,#818cf8,#ec4899)" }}
-              >
-                📍
-              </span>
+              <BrandMark className="h-7 w-7" />
               <span className="text-sm font-semibold text-slate-700">
                 @{handle}&apos;s concert timeline
               </span>
