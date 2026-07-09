@@ -59,7 +59,13 @@ export default function GuestBar({
             </nav>
           )}
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/about"
+              className="hidden text-sm font-medium text-ink-2 transition hover:text-ink sm:inline"
+            >
+              The story
+            </Link>
             <ThemeToggle />
             <Link
               href="/login"

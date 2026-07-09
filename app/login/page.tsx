@@ -151,6 +151,15 @@ export default function LoginPage() {
               </span>
             </button>
           </div>
+
+          <p className="mt-6 text-center text-sm text-ink-2">
+            <Link
+              href="/about"
+              className="font-medium text-accent transition hover:opacity-80"
+            >
+              Why I built this →
+            </Link>
+          </p>
         </div>
       </main>
     );

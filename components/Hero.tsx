@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import BrandMark from "./BrandMark";
 
 // Landing hero shown above the map after login: a full-bleed concert photo with
@@ -38,9 +39,17 @@ export default function Hero({
           <BrandMark className="h-8 w-8" />
           <span className="text-sm font-semibold tracking-tight">Concert Map</span>
         </div>
-        <span className="hidden text-xs text-white/60 sm:block">
-          Signed in as {email}
-        </span>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/about"
+            className="text-xs font-medium text-white/70 transition hover:text-white"
+          >
+            The story
+          </Link>
+          <span className="hidden text-xs text-white/60 sm:block">
+            Signed in as {email}
+          </span>
+        </div>
       </div>
 
       {/* hero copy */}
