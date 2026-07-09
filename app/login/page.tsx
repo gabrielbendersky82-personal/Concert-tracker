@@ -11,6 +11,7 @@ const inputClass =
   "w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
 
 export default function LoginPage() {
+  const [view, setView] = useState<"choose" | "auth">("choose");
   const [mode, setMode] = useState<Mode>("password");
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -86,9 +87,78 @@ export default function LoginPage() {
 
   const magicSent = mode === "magic" && status === "sent";
 
+  if (view === "choose") {
+    return (
+      <main className="flex min-h-dvh flex-col items-center justify-center bg-slate-50 px-4 py-10">
+        <div className="w-full max-w-2xl">
+          <div className="mb-8 text-center">
+            <div className="mb-2 text-4xl" aria-hidden>
+              📍🎶
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+              Concert Map
+            </h1>
+            <p className="mt-1.5 text-slate-500">
+              Every concert you&apos;ve ever seen, on one map.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Link
+              href="/demo"
+              className="group relative flex flex-col items-center overflow-hidden rounded-2xl border border-indigo-200 bg-gradient-to-b from-indigo-50/70 to-white p-8 text-center shadow-sm ring-1 ring-indigo-100 transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <span className="absolute right-3 top-3 rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                No account
+              </span>
+              <DemoArt />
+              <h2 className="mt-4 text-lg font-bold text-slate-900">
+                Explore the live demo
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Jump straight into a sample map, timeline &amp; stats.
+              </p>
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 group-hover:text-indigo-700">
+                Open demo
+                <span className="transition-transform group-hover:translate-x-0.5">
+                  →
+                </span>
+              </span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setView("auth")}
+              className="group flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <SignInArt />
+              <h2 className="mt-4 text-lg font-bold text-slate-900">Sign in</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Log in to build and keep your own concert map.
+              </p>
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-slate-700 group-hover:text-slate-900">
+                Continue
+                <span className="transition-transform group-hover:translate-x-0.5">
+                  →
+                </span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <button
+          type="button"
+          onClick={() => setView("choose")}
+          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-700"
+        >
+          <span aria-hidden>←</span> Back
+        </button>
         <div className="mb-6 text-center">
           <div className="mb-2 text-3xl" aria-hidden>
             📍🎶
@@ -231,16 +301,53 @@ export default function LoginPage() {
           </form>
         )}
       </div>
-
-      <p className="mt-5 text-center text-sm text-slate-500">
-        Just looking around?{" "}
-        <Link
-          href="/demo"
-          className="font-medium text-indigo-600 hover:text-indigo-700"
-        >
-          Explore the live demo →
-        </Link>
-      </p>
     </main>
+  );
+}
+
+function DemoArt() {
+  return (
+    <span className="relative grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-pink-500 shadow-md">
+      <svg
+        width="34"
+        height="34"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <path d="M12 21s-6-5.4-6-10a6 6 0 1112 0c0 4.6-6 10-6 10z" />
+        <circle cx="12" cy="11" r="2.4" />
+      </svg>
+      <span className="absolute -bottom-1.5 -right-1.5 grid h-7 w-7 place-items-center rounded-full bg-white text-pink-600 shadow ring-1 ring-slate-100">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <path d="M8 5v14l11-7z" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
+function SignInArt() {
+  return (
+    <span className="relative grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-slate-700 to-indigo-700 shadow-md">
+      <svg
+        width="34"
+        height="34"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <circle cx="12" cy="8.5" r="3.6" />
+        <path d="M5 20a7 7 0 0114 0" />
+      </svg>
+    </span>
   );
 }
