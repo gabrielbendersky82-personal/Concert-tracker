@@ -147,6 +147,12 @@ body {
   filter: drop-shadow(0 0 5px rgb(255 255 255 / 0.28));
 }
 
+/* CARTO's dark basemap is near-pure black — lift it so coastlines, borders
+   and labels stay readable while keeping the stage-dark mood */
+[data-theme="dark"] .leaflet-tile {
+  filter: brightness(1.9) contrast(0.92) saturate(1.15);
+}
+
 /*
  * Scroll-driven dissolve of the landing hero into the map. As the page scrolls
  * through the first viewport, the hero fades, drifts up, scales and softens so
