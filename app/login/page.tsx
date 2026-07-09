@@ -97,10 +97,10 @@ export default function LoginPage() {
             <div className="mb-2 text-4xl" aria-hidden>
               📍🎶
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
               Concert Map
             </h1>
-            <p className="mt-1.5 text-slate-500">
+            <p className="mt-1.5 font-bold text-slate-600">
               Every concert you&apos;ve ever seen, on one map.
             </p>
           </div>
