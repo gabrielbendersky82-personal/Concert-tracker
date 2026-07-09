@@ -15,12 +15,18 @@ export default function DashboardView({
   data,
   handle,
   guest = false,
+  attendeeBreakdown,
 }: {
   data: DashboardData;
   handle: string;
   guest?: boolean;
+  /** Demo only: per-person show counts to show a "Who went" card. */
+  attendeeBreakdown?: { label: string; color: string; count: number }[];
 }) {
   const empty = data.totalShows === 0;
+  const breakdownMax = attendeeBreakdown
+    ? Math.max(1, ...attendeeBreakdown.map((a) => a.count))
+    : 1;
 
   return (
     <main className="min-h-dvh bg-slate-50">
@@ -82,6 +88,40 @@ export default function DashboardView({
 
             {/* Charts */}
             <div className="grid gap-4 md:grid-cols-2">
+              {attendeeBreakdown && attendeeBreakdown.length > 0 && (
+                <Card
+                  title="Who went"
+                  subtitle="Shows per person"
+                  className="md:col-span-2"
+                >
+                  <ul className="space-y-2.5">
+                    {attendeeBreakdown.map((a) => (
+                      <li key={a.label} className="flex items-center gap-3">
+                        <span className="flex w-16 shrink-0 items-center gap-1.5 text-sm font-medium text-slate-700">
+                          <span
+                            className="h-2.5 w-2.5 rounded-full"
+                            style={{ background: a.color }}
+                          />
+                          {a.label}
+                        </span>
+                        <span className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
+                          <span
+                            className="block h-full rounded-full"
+                            style={{
+                              width: `${(a.count / breakdownMax) * 100}%`,
+                              background: a.color,
+                            }}
+                          />
+                        </span>
+                        <span className="w-6 shrink-0 text-right text-sm tabular-nums text-slate-500">
+                          {a.count}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+
               <Card title="Shows over time" subtitle="Cumulative total">
                 <AreaLine data={data.cumulative} />
               </Card>

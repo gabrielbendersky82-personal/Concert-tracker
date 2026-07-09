@@ -143,12 +143,19 @@ export default function TimelineView({
   shows,
   handle,
   guest = false,
+  attendees,
 }: {
   shows: Show[];
   handle: string;
   guest?: boolean;
+  /** When set, nodes/cards are colored by attendee (show.user_id → persona). */
+  attendees?: { id: string; label: string; color: string }[];
 }) {
   const captureRef = useRef<HTMLDivElement>(null);
+  const attendeeColor = attendees
+    ? (show: Show) =>
+        attendees.find((a) => a.id === show.user_id)?.color ?? null
+    : () => null;
   const [capturing, setCapturing] = useState(false);
   const [busy, setBusy] = useState<"" | "export" | "share">("");
 
@@ -254,9 +261,8 @@ export default function TimelineView({
   for (const g of groups) {
     items.push(<YearMarker key={`y-${g.year}`} year={g.year} count={g.shows.length} />);
     for (const s of g.shows) {
-      items.push(
-        <Row key={s.id} show={s} hue={HUES[gi % HUES.length]} side={gi % 2 === 1} />
-      );
+      const hue = attendeeColor(s) ?? HUES[gi % HUES.length];
+      items.push(<Row key={s.id} show={s} hue={hue} side={gi % 2 === 1} />);
       gi += 1;
     }
   }
@@ -284,6 +290,22 @@ export default function TimelineView({
                 ? `${ordered.length} show${ordered.length === 1 ? "" : "s"} · ${yearsLabel}`
                 : "No shows yet."}
             </p>
+            {attendees && attendees.length > 0 && ordered.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                {attendees.map((a) => (
+                  <span
+                    key={a.id}
+                    className="flex items-center gap-1.5 text-xs font-medium text-slate-600"
+                  >
+                    <span
+                      className="h-2.5 w-2.5 rounded-full"
+                      style={{ background: a.color }}
+                    />
+                    {a.label}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           {ordered.length > 0 && (
             <div className="flex gap-2">
