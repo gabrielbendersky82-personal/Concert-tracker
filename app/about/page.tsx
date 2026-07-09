@@ -10,11 +10,11 @@ export const metadata: Metadata = {
 };
 
 // The signature nights. Artist in bold, the moment after the em dash.
-// TODO(@gaby): add the venue for the Neil Young show if you'd like it named.
 const MEMORIES: { artist: string; moment: string }[] = [
   {
     artist: "Neil Young",
-    moment: "the night I turned 21 — spending my birthday exactly where I wanted to be.",
+    moment:
+      "my 21st birthday at Madison Square Garden — turning 21 exactly where I wanted to be.",
   },
   {
     artist: "Sonic Youth + Iggy Pop",
