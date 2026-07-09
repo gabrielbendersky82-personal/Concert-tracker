@@ -195,7 +195,7 @@ export default function ConcertApp({
 
         {/* Light top fade so the map tiles emerge softly from the hero dissolve */}
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 z-[500] h-24"
+          className="pointer-events-none absolute inset-x-0 top-0 z-[500] h-12"
           style={{
             background:
               "linear-gradient(180deg, #eef1f6, rgba(238,241,246,0))",

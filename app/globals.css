@@ -47,14 +47,14 @@ body {
     .hero-dissolve {
       animation: hero-dissolve linear both;
       animation-timeline: scroll(root block);
-      animation-range: 0 90vh;
+      animation-range: 0 60vh;
       will-change: opacity, transform;
     }
     @keyframes hero-dissolve {
       to {
         opacity: 0;
         transform: translateY(-3vh) scale(1.05);
-        filter: blur(5px);
+        filter: blur(4px);
       }
     }
   }
