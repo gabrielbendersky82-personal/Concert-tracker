@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { NavIcon, type Section } from "./AppNav";
 import BrandMark from "./BrandMark";
+import ThemeToggle from "./ThemeToggle";
 
 const DEMO_SECTIONS: { id: Section; label: string; href: string }[] = [
   { id: "map", label: "Map", href: "/demo" },
@@ -58,12 +59,15 @@ export default function GuestBar({
             </nav>
           )}
 
-          <Link
-            href="/login"
-            className="rounded-full bg-indigo-600 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
-          >
-            Sign in
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link
+              href="/login"
+              className="rounded-full bg-cta px-4 py-1.5 text-sm font-semibold text-cta-ink transition hover:opacity-90"
+            >
+              Sign in
+            </Link>
+          </div>
         </div>
 
         {notice && (

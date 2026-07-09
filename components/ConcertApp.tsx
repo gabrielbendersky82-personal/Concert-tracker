@@ -12,6 +12,7 @@ import type { Show, ShowMedia } from "@/lib/types";
 import type { Attendee } from "@/lib/demoShows";
 import FriendsToggle from "./FriendsToggle";
 import BrandMark from "./BrandMark";
+import ThemeToggle from "./ThemeToggle";
 import AddShowForm from "./AddShowForm";
 import StatsPanel from "./StatsPanel";
 import ShowDetail from "./ShowDetail";
@@ -202,8 +203,7 @@ export default function ConcertApp({
         <div
           className="pointer-events-none absolute inset-x-0 top-0 z-[500] h-12"
           style={{
-            background:
-              "linear-gradient(180deg, #eef1f6, rgba(238,241,246,0))",
+            background: "linear-gradient(180deg, var(--ground), transparent)",
           }}
         />
 
@@ -277,11 +277,12 @@ export default function ConcertApp({
               </p>
             </div>
           </button>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
+            <ThemeToggle />
             {readOnly ? (
               <Link
                 href="/login"
-                className="rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
+                className="rounded-full bg-cta px-3 py-1.5 text-xs font-semibold text-cta-ink transition hover:opacity-90"
               >
                 Sign in
               </Link>

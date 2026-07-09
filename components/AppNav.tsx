@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import BrandMark from "./BrandMark";
+import ThemeToggle from "./ThemeToggle";
 
 export type Section = "map" | "timeline" | "dashboard" | "friends";
 
@@ -178,7 +179,10 @@ export default function AppNav({
             })}
           </nav>
 
-          <AccountMenu handle={handle} />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <AccountMenu handle={handle} />
+          </div>
         </div>
       </header>
 

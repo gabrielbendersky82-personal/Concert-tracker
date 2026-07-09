@@ -29,11 +29,11 @@ export default async function Home() {
     .eq("user_id", user.id);
 
   return (
-    <main className="flex flex-col bg-[#eef1f6]">
+    <main className="flex flex-col bg-ground">
       <Hero email={user.email ?? "you"} count={count ?? 0} />
-      {/* Map/app sheet. The hero above dissolves into #eef1f6 and the map fades
-          in from the same colour, so there's no seam. */}
-      <section id="app" className="h-dvh w-full bg-[#eef1f6]">
+      {/* Map/app sheet. The hero above dissolves into the ground token and the
+          map fades in from the same colour, so there's no seam in either theme. */}
+      <section id="app" className="h-dvh w-full bg-ground">
         <ConcertApp handle={profile.handle} />
       </section>
     </main>

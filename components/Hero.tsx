@@ -28,7 +28,7 @@ export default function Hero({
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, transparent 45%, rgba(238,241,246,0.55) 72%, #eef1f6 100%)",
+            "linear-gradient(180deg, transparent 45%, color-mix(in srgb, var(--ground) 55%, transparent) 72%, var(--ground) 100%)",
         }}
       />
 
@@ -67,7 +67,7 @@ export default function Hero({
         <div className="mt-9 flex flex-col items-center gap-4">
           <a
             href="#app"
-            className="rounded-full bg-white px-7 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-black/40 transition hover:bg-indigo-100"
+            className="rounded-full bg-white px-7 py-3 text-sm font-semibold text-[#0a0a0f] shadow-lg shadow-black/40 transition hover:bg-white/90"
           >
             {count > 0
               ? `Open your map · ${count} show${count === 1 ? "" : "s"}`

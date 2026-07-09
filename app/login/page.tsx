@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import BrandMark from "@/components/BrandMark";
+import ThemeToggle from "@/components/ThemeToggle";
 
 type Mode = "password" | "magic";
 type Status = "idle" | "working" | "sent" | "error";
@@ -91,8 +92,11 @@ export default function LoginPage() {
 
   if (view === "choose") {
     return (
-      <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-slate-50 px-4 py-10">
+      <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-ground px-4 py-10">
         <Backdrop />
+        <div className="absolute right-4 top-4 z-20">
+          <ThemeToggle />
+        </div>
         <div className="relative z-10 w-full max-w-2xl">
           <div className="mb-8 text-center">
             <div className="mb-3 flex justify-center">
@@ -153,9 +157,12 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-slate-50 px-4">
+    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-ground px-4">
       <Backdrop />
-      <div className="relative z-10 w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="absolute right-4 top-4 z-20">
+        <ThemeToggle />
+      </div>
+      <div className="relative z-10 w-full max-w-sm rounded-2xl border border-line bg-surface p-8 shadow-sm">
         <button
           type="button"
           onClick={() => setView("choose")}

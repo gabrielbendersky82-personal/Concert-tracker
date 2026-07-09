@@ -1,23 +1,98 @@
 @import "tailwindcss";
 
+/*
+ * Theme tokens — TIDAL-inspired system with light + dark modes.
+ * Light is the :root default; system dark comes from the media query
+ * (pre-hydration / no-JS fallback); an explicit user choice is stamped as
+ * data-theme on <html> by the inline script in app/layout.tsx and wins in
+ * BOTH directions (attribute selectors out-rank the bare :root).
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --ground: #fafaf8;
+  --surface: #ffffff;
+  --raised: #f1f0ec;
+  --line: #e7e5df;
+  --line-2: #d8d5cc;
+  --ink: #14141a;
+  --ink-2: #61616b;
+  --ink-3: #98989f;
+  --accent: #8a6a00;
+  --accent-ink: #ffffff;
+  --cta: #14141a;
+  --cta-ink: #ffffff;
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --ground: #0a0a0f;
+    --surface: #12121a;
+    --raised: #1a1a24;
+    --line: #23232f;
+    --line-2: #2e2e3c;
+    --ink: #ffffff;
+    --ink-2: #a3a3ae;
+    --ink-3: #6f6f7c;
+    --accent: #f5c842;
+    --accent-ink: #0a0a0f;
+    --cta: #ffffff;
+    --cta-ink: #0a0a0f;
+    color-scheme: dark;
   }
 }
+
+:root[data-theme="light"] {
+  --ground: #fafaf8;
+  --surface: #ffffff;
+  --raised: #f1f0ec;
+  --line: #e7e5df;
+  --line-2: #d8d5cc;
+  --ink: #14141a;
+  --ink-2: #61616b;
+  --ink-3: #98989f;
+  --accent: #8a6a00;
+  --accent-ink: #ffffff;
+  --cta: #14141a;
+  --cta-ink: #ffffff;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --ground: #0a0a0f;
+  --surface: #12121a;
+  --raised: #1a1a24;
+  --line: #23232f;
+  --line-2: #2e2e3c;
+  --ink: #ffffff;
+  --ink-2: #a3a3ae;
+  --ink-3: #6f6f7c;
+  --accent: #f5c842;
+  --accent-ink: #0a0a0f;
+  --cta: #ffffff;
+  --cta-ink: #0a0a0f;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-cta: var(--cta);
+  --color-cta-ink: var(--cta-ink);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* dark: variant keyed on the stamped attribute (used only for the few
+   per-theme exceptions like semantic text shades and the pin glow) */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 html {
   scroll-behavior: smooth;
@@ -30,9 +105,46 @@ html {
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, Arial, Helvetica, sans-serif;
+}
+
+/*
+ * Leaflet chrome — leaflet.css ships in the client MapView chunk and can land
+ * after this file in the cascade, so win on specificity with the :root prefix.
+ */
+:root .leaflet-container {
+  background: var(--raised);
+}
+:root .leaflet-popup-content-wrapper,
+:root .leaflet-popup-tip {
+  background: var(--surface);
+  color: var(--ink);
+}
+:root .leaflet-container a.leaflet-popup-close-button {
+  color: var(--ink-3);
+}
+:root .leaflet-bar a {
+  background-color: var(--surface);
+  color: var(--ink);
+  border-bottom-color: var(--line);
+}
+:root .leaflet-bar a.leaflet-disabled {
+  background-color: var(--raised);
+  color: var(--ink-3);
+}
+:root .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--surface) 75%, transparent);
+  color: var(--ink-3);
+}
+:root .leaflet-control-attribution a {
+  color: var(--ink-2);
+}
+
+/* Pins glow softly against the dark basemap */
+[data-theme="dark"] .concert-pin svg {
+  filter: drop-shadow(0 0 5px rgb(255 255 255 / 0.28));
 }
 
 /*
