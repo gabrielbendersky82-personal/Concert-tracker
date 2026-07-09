@@ -6,7 +6,7 @@ import GuestBar from "@/components/GuestBar";
 export const metadata: Metadata = {
   title: "The story behind Concert Map",
   description:
-    "Why I built Concert Map — the shows that shaped my life, and the memories I wanted to map and share.",
+    "Why I built Concert Map: the shows that shaped my life, and the memories I wanted to map and share.",
 };
 
 // Subtle inline emphasis so artist names pop within the flowing prose.
@@ -49,7 +49,7 @@ export default function AboutPage() {
         <div className="space-y-5 pt-8 text-lg leading-relaxed text-ink-2">
           <p>
             Music is a huge part of who I am. When I look back, I don&apos;t
-            measure the years by dates or jobs or addresses — I measure them by
+            measure the years by dates or jobs or addresses. I measure them by
             the shows I was at, and who I was with.
           </p>
           <p>
@@ -60,25 +60,24 @@ export default function AboutPage() {
             heard <Artist>Sigur Rós</Artist> play what I can only describe as
             music from heaven. <Artist>My Bloody Valentine</Artist> made a whole
             year of mine bleed out in the most blissful joy. After years of
-            waiting, I finally caught <Artist>Radiohead</Artist>
-            {" — "}at home, in Tel Aviv. And I&apos;ll never forget standing on
-            stage with{" "}
+            waiting, I finally caught <Artist>Radiohead</Artist> at home in Tel
+            Aviv. And I&apos;ll never forget standing on stage with{" "}
             <Artist>Nick Cave</Artist> at Primavera Sound in Barcelona, in front
             of fifty thousand people, completely and utterly blown away.
           </p>
           <p>
             …and dozens more. Some I saw on my own; most I shared with friends.
-            These are the milestones that shaped me — the nights I keep coming
+            These are the milestones that shaped me, the nights I keep coming
             back to, the ones that made me who I am today.
           </p>
           <p>
             That&apos;s why I built Concert Map: to pin these memories to the
             places they happened, to relive the gigs I shared with friends, and
-            to keep documenting my journey as a music lover — one show at a time.
+            to keep documenting my journey as a music lover, one show at a time.
           </p>
         </div>
 
-        <p className="mt-8 text-base font-semibold text-ink">— Gaby</p>
+        <p className="mt-8 text-base font-semibold text-ink">Gaby</p>
 
         {/* CTA */}
         <div className="mt-10 flex flex-col gap-3 border-t border-line pt-8 sm:flex-row sm:items-center">
