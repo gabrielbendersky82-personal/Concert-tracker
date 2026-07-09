@@ -37,10 +37,14 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 // Demo (logged-out) section nav — points at the public /demo routes.
-const DEMO_NAV: { id: "map" | "timeline" | "dashboard"; href: string }[] = [
-  { id: "map", href: "/demo" },
-  { id: "timeline", href: "/demo/timeline" },
-  { id: "dashboard", href: "/demo/dashboard" },
+const DEMO_NAV: {
+  id: "map" | "timeline" | "dashboard";
+  label: string;
+  href: string;
+}[] = [
+  { id: "map", label: "Map", href: "/demo" },
+  { id: "timeline", label: "Timeline", href: "/demo/timeline" },
+  { id: "dashboard", label: "Dashboard", href: "/demo/dashboard" },
 ];
 
 export default function ConcertApp({
@@ -274,25 +278,6 @@ export default function ConcertApp({
             </div>
           </button>
           <div className="flex items-center gap-1">
-            <nav className="hidden items-center gap-0.5 md:flex">
-              {(readOnly ? DEMO_NAV : SECTIONS).map((s) => {
-                const on = s.id === "map";
-                return (
-                  <Link
-                    key={s.id}
-                    href={s.href}
-                    title={s.id}
-                    className={`grid h-8 w-8 place-items-center rounded-lg transition ${
-                      on
-                        ? "bg-indigo-50 text-indigo-700"
-                        : "text-slate-400 hover:bg-slate-50 hover:text-slate-700"
-                    }`}
-                  >
-                    <NavIcon id={s.id} className="h-[18px] w-[18px]" />
-                  </Link>
-                );
-              })}
-            </nav>
             {readOnly ? (
               <Link
                 href="/login"
@@ -312,6 +297,27 @@ export default function ConcertApp({
             </button>
           </div>
         </div>
+
+        {/* Section nav — labeled links matching the top bar on the other pages */}
+        <nav className="hidden items-center gap-1 border-t border-slate-100 px-3 py-2 md:flex">
+          {(readOnly ? DEMO_NAV : SECTIONS).map((s) => {
+            const on = s.id === "map";
+            return (
+              <Link
+                key={s.id}
+                href={s.href}
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition ${
+                  on
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                }`}
+              >
+                <NavIcon id={s.id} className="h-4 w-4" />
+                {s.label}
+              </Link>
+            );
+          })}
+        </nav>
 
         {hasFriends && (
           <div className="flex items-center justify-between gap-2 border-t border-slate-100 px-4 py-2">
