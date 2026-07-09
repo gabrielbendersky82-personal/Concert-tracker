@@ -193,8 +193,32 @@ const SEED: DemoSeed[] = [
   },
 ];
 
+/**
+ * The demo is framed as a shared map: three people's concerts, color-coded.
+ * `id` matches the show's `user_id`, so the map/list can color by attendee.
+ * (Plain serializable data — safe to pass from the server demo page.)
+ */
+export interface Attendee {
+  id: string;
+  label: string;
+  color: string;
+}
+
+export const DEMO_PEOPLE: Attendee[] = [
+  { id: "you", label: "You", color: "#4f46e5" },
+  { id: "maya", label: "Maya", color: "#ec4899" },
+  { id: "leo", label: "Leo", color: "#f59e0b" },
+];
+
+// Which persona attended each SEED entry (by index) — a varied spread.
+const ATTENDEE_BY_INDEX = [
+  "you", "maya", "you", "leo", "you", "maya", "you", "leo",
+  "maya", "you", "leo", "maya", "you", "leo", "you", "maya",
+];
+
 export const DEMO_SHOWS: Show[] = SEED.map((s, i) => {
   const id = `demo-${i + 1}`;
+  const attendee = ATTENDEE_BY_INDEX[i] ?? "you";
   const media = [
     ...(s.photos ?? []).map((url, j) => ({
       id: `${id}-photo-${j + 1}`,
@@ -218,7 +242,7 @@ export const DEMO_SHOWS: Show[] = SEED.map((s, i) => {
   ];
   return {
     id,
-    user_id: "demo",
+    user_id: attendee,
     artist: s.artist,
     venue: s.venue,
     city: s.city,

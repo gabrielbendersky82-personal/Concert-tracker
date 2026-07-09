@@ -42,11 +42,29 @@ export default function ConcertApp({
   handle,
   readOnly = false,
   initialShows,
+  attendees,
 }: {
   handle: string;
   readOnly?: boolean;
   initialShows?: Show[];
+  /** When set, pins/list are colored by attendee (show.user_id → persona). */
+  attendees?: { id: string; label: string; color: string }[];
 }) {
+  // Derive the coloring helpers from the (serializable) attendee list.
+  const attendeeMap = useMemo(
+    () => new Map((attendees ?? []).map((a) => [a.id, a])),
+    [attendees]
+  );
+  const mapColorOf = attendees
+    ? (show: Show) => attendeeMap.get(show.user_id)?.color ?? "#e11d48"
+    : undefined;
+  const mapLegend = attendees?.map((a) => ({ label: a.label, color: a.color }));
+  const attendeeOf = attendees
+    ? (show: Show) => {
+        const a = attendeeMap.get(show.user_id);
+        return a ? { label: a.label, color: a.color } : null;
+      }
+    : undefined;
   const [shows, setShows] = useState<Show[]>(initialShows ?? []);
   const [loading, setLoading] = useState(!readOnly);
   const [error, setError] = useState("");
@@ -145,6 +163,8 @@ export default function ConcertApp({
           shows={shows}
           selectedId={selectedId}
           onSelect={handleSelect}
+          colorOf={mapColorOf}
+          legend={mapLegend}
         />
 
         {/* Light top fade so the map tiles emerge softly from the hero dissolve */}
@@ -315,6 +335,7 @@ export default function ConcertApp({
                   shows={shows}
                   loading={loading}
                   onSelect={handleSelect}
+                  attendeeOf={attendeeOf}
                 />
               )}
 
@@ -354,10 +375,12 @@ function ShowsList({
   shows,
   loading,
   onSelect,
+  attendeeOf,
 }: {
   shows: Show[];
   loading: boolean;
   onSelect: (id: string) => void;
+  attendeeOf?: (show: Show) => { label: string; color: string } | null;
 }) {
   if (loading) {
     return <p className="text-sm text-slate-400">Loading…</p>;
@@ -378,14 +401,24 @@ function ShowsList({
             className="w-full rounded-lg px-2 py-2 text-left transition hover:bg-slate-50"
           >
             <div className="flex items-baseline justify-between gap-2">
-              <span className="truncate font-medium text-slate-800">
-                {show.artist}
+              <span className="flex min-w-0 items-center gap-1.5">
+                {attendeeOf?.(show) && (
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ background: attendeeOf(show)!.color }}
+                    title={attendeeOf(show)!.label}
+                  />
+                )}
+                <span className="truncate font-medium text-slate-800">
+                  {show.artist}
+                </span>
               </span>
               <span className="shrink-0 text-xs tabular-nums text-slate-400">
                 {show.show_date.slice(0, 4)}
               </span>
             </div>
             <div className="truncate text-xs text-slate-500">
+              {attendeeOf?.(show) ? `${attendeeOf(show)!.label} · ` : ""}
               {[show.venue, show.city].filter(Boolean).join(" · ") || "—"}
             </div>
           </button>

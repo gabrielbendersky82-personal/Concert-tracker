@@ -10,7 +10,7 @@ import {
   sendRequest,
 } from "@/lib/friends";
 import { computeStats } from "@/lib/stats";
-import { findMutual } from "@/lib/mutual";
+import { findMutual, showKey } from "@/lib/mutual";
 import { setProfileVisibility } from "@/lib/profiles";
 import AppNav from "./AppNav";
 import GuestBar from "./GuestBar";
@@ -91,9 +91,42 @@ export default function FriendProfileView({
     [isSelf, guest, myShows, theirShows]
   );
   const stats = useMemo(() => computeStats(theirShows), [theirShows]);
+
+  // When a logged-in viewer compares with someone else, overlay both people's
+  // shows on one map, colored: yours / theirs / both attended.
+  const compare = !isSelf && !guest && myShows.length > 0;
+  const { mapShows, colorById, mapLegend } = useMemo(() => {
+    if (!compare) {
+      return {
+        mapShows: theirShows,
+        colorById: new Map<string, string>(),
+        mapLegend: undefined as { label: string; color: string }[] | undefined,
+      };
+    }
+    const MINE = "#4f46e5";
+    const THEM = "#ec4899";
+    const BOTH = "#10b981";
+    const mutualKeys = new Set(mutual.map(showKey));
+    const colors = new Map<string, string>();
+    for (const s of theirShows) {
+      colors.set(s.id, mutualKeys.has(showKey(s)) ? BOTH : THEM);
+    }
+    const mineOnly = myShows.filter((s) => !mutualKeys.has(showKey(s)));
+    for (const s of mineOnly) colors.set(s.id, MINE);
+    return {
+      mapShows: [...theirShows, ...mineOnly],
+      colorById: colors,
+      mapLegend: [
+        { label: "You", color: MINE },
+        { label: profile.display_name || `@${profile.handle}`, color: THEM },
+        { label: "Both", color: BOTH },
+      ],
+    };
+  }, [compare, theirShows, myShows, mutual, profile]);
+
   const selectedShow = useMemo(
-    () => theirShows.find((s) => s.id === selectedId) ?? null,
-    [theirShows, selectedId]
+    () => mapShows.find((s) => s.id === selectedId) ?? null,
+    [mapShows, selectedId]
   );
 
   async function action(fn: () => Promise<void>) {
@@ -319,17 +352,21 @@ export default function FriendProfileView({
               ))}
             </div>
 
-            {/* Their map */}
+            {/* Their map (overlays your shows too when comparing) */}
             <div className="mt-4 h-[440px] overflow-hidden rounded-2xl border border-slate-200 bg-white">
-              {theirShows.length === 0 ? (
+              {mapShows.length === 0 ? (
                 <div className="flex h-full items-center justify-center text-sm text-slate-400">
                   No shows on the map yet.
                 </div>
               ) : (
                 <MapView
-                  shows={theirShows}
+                  shows={mapShows}
                   selectedId={selectedId}
                   onSelect={setSelectedId}
+                  colorOf={
+                    compare ? (s) => colorById.get(s.id) ?? "#ec4899" : undefined
+                  }
+                  legend={mapLegend}
                 />
               )}
             </div>
