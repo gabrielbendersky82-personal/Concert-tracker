@@ -39,17 +39,9 @@ export default function Hero({
           <BrandMark className="h-8 w-8" />
           <span className="text-sm font-semibold tracking-tight">Concert Map</span>
         </div>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/about"
-            className="text-xs font-medium text-white/70 transition hover:text-white"
-          >
-            The story
-          </Link>
-          <span className="hidden text-xs text-white/60 sm:block">
-            Signed in as {email}
-          </span>
-        </div>
+        <span className="hidden text-xs text-white/60 sm:block">
+          Signed in as {email}
+        </span>
       </div>
 
       {/* hero copy */}
@@ -82,16 +74,24 @@ export default function Hero({
               ? `Open your map · ${count} show${count === 1 ? "" : "s"}`
               : "Open your map"}
           </a>
-          <a
-            href="#app"
-            className="flex items-center gap-1 text-xs font-medium text-white/70 transition hover:text-white"
-            aria-label="Scroll to your map"
-          >
-            scroll to explore
-            <span aria-hidden className="animate-bounce">
-              ↓
-            </span>
-          </a>
+          <div className="flex items-center gap-5 text-xs font-medium">
+            <Link
+              href="/about"
+              className="text-white/90 underline decoration-white/40 underline-offset-4 transition hover:decoration-white"
+            >
+              The story behind it
+            </Link>
+            <a
+              href="#app"
+              className="flex items-center gap-1 text-white/70 transition hover:text-white"
+              aria-label="Scroll to your map"
+            >
+              scroll to explore
+              <span aria-hidden className="animate-bounce">
+                ↓
+              </span>
+            </a>
+          </div>
         </div>
       </div>
     </section>

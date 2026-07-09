@@ -9,35 +9,9 @@ export const metadata: Metadata = {
     "Why I built Concert Map — the shows that shaped my life, and the memories I wanted to map and share.",
 };
 
-// The signature nights. Artist in bold, the moment after the em dash.
-const MEMORIES: { artist: string; moment: string }[] = [
-  {
-    artist: "Neil Young",
-    moment:
-      "my 21st birthday at Madison Square Garden — turning 21 exactly where I wanted to be.",
-  },
-  {
-    artist: "Sonic Youth + Iggy Pop",
-    moment: "one double bill, one night that leveled the room.",
-  },
-  {
-    artist: "Nick Cave",
-    moment:
-      "on stage at Primavera Sound in Barcelona, in front of 50,000 people — completely, utterly blown away.",
-  },
-];
-
-function PinMark() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="mt-1 h-5 w-5 shrink-0 text-accent"
-      fill="currentColor"
-      aria-hidden
-    >
-      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" />
-    </svg>
-  );
+// Subtle inline emphasis so artist names pop within the flowing prose.
+function Artist({ children }: { children: React.ReactNode }) {
+  return <span className="font-semibold text-ink">{children}</span>;
 }
 
 export default function AboutPage() {
@@ -78,24 +52,20 @@ export default function AboutPage() {
             measure the years by dates or jobs or addresses — I measure them by
             the shows I was at, and who I was with.
           </p>
-          <p>A few of the nights I keep coming back to:</p>
-        </div>
-
-        <ul className="my-8 space-y-4">
-          {MEMORIES.map((m) => (
-            <li
-              key={m.artist}
-              className="flex items-start gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm"
-            >
-              <PinMark />
-              <p className="text-base leading-relaxed text-ink-2">
-                <span className="font-bold text-ink">{m.artist}</span> — {m.moment}
-              </p>
-            </li>
-          ))}
-        </ul>
-
-        <div className="space-y-5 text-lg leading-relaxed text-ink-2">
+          <p>
+            Some nights are burned in for good. I turned 21 at Madison Square
+            Garden watching <Artist>Neil Young</Artist>, exactly where I wanted
+            to be. I saw <Artist>Sonic Youth</Artist> and{" "}
+            <Artist>Iggy Pop</Artist> share a single bill and level the room, and
+            heard <Artist>Sigur Rós</Artist> play what I can only describe as
+            music from heaven. <Artist>My Bloody Valentine</Artist> made a whole
+            year of mine bleed out in the most blissful joy. After years of
+            waiting, I finally caught <Artist>Radiohead</Artist>
+            {" — "}at home, in Tel Aviv. And I&apos;ll never forget standing on
+            stage with{" "}
+            <Artist>Nick Cave</Artist> at Primavera Sound in Barcelona, in front
+            of fifty thousand people, completely and utterly blown away.
+          </p>
           <p>
             …and dozens more. Some I saw on my own; most I shared with friends.
             These are the milestones that shaped me — the nights I keep coming
