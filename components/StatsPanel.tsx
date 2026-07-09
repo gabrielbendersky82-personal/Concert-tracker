@@ -14,14 +14,14 @@ function StatTile({
   sub?: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3">
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
+    <div className="rounded-xl border border-line bg-surface p-3">
+      <div className="text-xs font-medium uppercase tracking-wide text-ink-3">
         {label}
       </div>
-      <div className="mt-0.5 truncate text-lg font-semibold text-slate-900">
+      <div className="mt-0.5 truncate text-lg font-semibold text-ink">
         {value}
       </div>
-      {sub && <div className="truncate text-xs text-slate-500">{sub}</div>}
+      {sub && <div className="truncate text-xs text-ink-2">{sub}</div>}
     </div>
   );
 }
@@ -31,7 +31,7 @@ export default function StatsPanel({ shows }: { shows: Show[] }) {
 
   if (shows.length === 0) {
     return (
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-ink-2">
         Add your first show to see your stats.
       </p>
     );
@@ -71,23 +71,25 @@ export default function StatsPanel({ shows }: { shows: Show[] }) {
       />
 
       {stats.showsPerYear.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-3">
-          <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+        <div className="rounded-xl border border-line bg-surface p-3">
+          <div className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-3">
             Shows per year
           </div>
           <div className="space-y-1.5">
             {stats.showsPerYear.map((y) => (
               <div key={y.year} className="flex items-center gap-2">
-                <span className="w-10 shrink-0 text-xs tabular-nums text-slate-500">
+                <span className="w-10 shrink-0 text-xs tabular-nums text-ink-2">
                   {y.year}
                 </span>
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-raised">
                   <div
-                    className="h-full rounded-full bg-indigo-500"
+                    className={`h-full rounded-full ${
+                      y.count === maxYear ? "bg-accent" : "bg-ink-3/40"
+                    }`}
                     style={{ width: `${(y.count / maxYear) * 100}%` }}
                   />
                 </div>
-                <span className="w-5 shrink-0 text-right text-xs tabular-nums text-slate-600">
+                <span className="w-5 shrink-0 text-right text-xs tabular-nums text-ink-2">
                   {y.count}
                 </span>
               </div>

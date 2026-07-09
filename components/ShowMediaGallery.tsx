@@ -46,7 +46,7 @@ export default function ShowMediaGallery({
     <div className="mt-4 space-y-3">
       {photos.length > 0 && (
         <div>
-          <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+          <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-3">
             Photos {`(${photos.length})`}
           </h3>
           <div className="grid grid-cols-3 gap-1.5">
@@ -57,7 +57,7 @@ export default function ShowMediaGallery({
                   key={p.id}
                   type="button"
                   onClick={() => setLightbox(src)}
-                  className="group relative aspect-square overflow-hidden rounded-lg bg-slate-100"
+                  className="group relative aspect-square overflow-hidden rounded-lg bg-raised"
                 >
                   <DeleteBadge m={p} />
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -76,7 +76,7 @@ export default function ShowMediaGallery({
 
       {videos.length > 0 && (
         <div>
-          <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+          <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-3">
             Videos {`(${videos.length})`}
           </h3>
           <div className="space-y-2">

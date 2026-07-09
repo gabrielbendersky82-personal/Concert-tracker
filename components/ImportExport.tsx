@@ -93,14 +93,14 @@ export default function ImportExport({
         <button
           onClick={handleExport}
           disabled={shows.length === 0}
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+          className="flex-1 rounded-lg border border-line-2 px-3 py-2 text-sm font-medium text-ink-2 transition hover:bg-raised disabled:opacity-50"
         >
           Export JSON
         </button>
         <button
           onClick={() => fileRef.current?.click()}
           disabled={busy}
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+          className="flex-1 rounded-lg border border-line-2 px-3 py-2 text-sm font-medium text-ink-2 transition hover:bg-raised disabled:opacity-50"
         >
           {busy ? "Importing…" : "Import JSON"}
         </button>
@@ -112,7 +112,7 @@ export default function ImportExport({
           className="hidden"
         />
       </div>
-      {message && <p className="text-xs text-slate-500">{message}</p>}
+      {message && <p className="text-xs text-ink-2">{message}</p>}
     </div>
   );
 }

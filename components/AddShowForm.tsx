@@ -11,8 +11,8 @@ import {
 import { addShowVideo, uploadShowPhoto } from "@/lib/media";
 
 const inputClass =
-  "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
-const labelClass = "mb-1 block text-xs font-medium text-slate-600";
+  "w-full rounded-lg border border-line-2 bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-3 outline-none focus:border-accent focus:ring-2 focus:ring-accent/25";
+const labelClass = "mb-1 block text-xs font-medium text-ink-2";
 
 type Mode = "search" | "url" | "manual";
 
@@ -230,7 +230,7 @@ export default function AddShowForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       {/* Method selector — pick how to add this show. */}
-      <div className="grid grid-cols-3 gap-1 rounded-xl border border-indigo-100 bg-indigo-50/60 p-1">
+      <div className="grid grid-cols-3 gap-1 rounded-xl border border-line bg-raised p-1">
         {METHODS.map(({ id, label, icon: Icon }) => {
           const active = mode === id;
           return (
@@ -241,8 +241,8 @@ export default function AddShowForm({
               aria-pressed={active}
               className={`flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition ${
                 active
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-indigo-700 hover:bg-indigo-100"
+                  ? "bg-surface text-ink shadow-sm"
+                  : "text-ink-2 hover:text-ink"
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -283,7 +283,7 @@ export default function AddShowForm({
             type="button"
             onClick={handleSearch}
             disabled={searching || (!sArtist.trim() && !sCity.trim())}
-            className="w-full rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+            className="w-full rounded-full bg-cta px-3 py-2 text-sm font-semibold text-cta-ink transition hover:opacity-90 disabled:opacity-50"
           >
             {searching ? "Searching…" : "Search concerts"}
           </button>
@@ -291,7 +291,7 @@ export default function AddShowForm({
           {results && (
             <div className="max-h-64 space-y-1 overflow-y-auto">
               {results.length === 0 ? (
-                <p className="py-2 text-center text-xs text-slate-500">
+                <p className="py-2 text-center text-xs text-ink-2">
                   No concerts found. Try just the artist, or a different city.
                 </p>
               ) : (
@@ -300,21 +300,21 @@ export default function AddShowForm({
                     key={r.id}
                     type="button"
                     onClick={() => applyResult(r)}
-                    className="w-full rounded-lg border border-slate-200 bg-white p-2 text-left transition hover:border-indigo-300 hover:bg-indigo-50/50"
+                    className="w-full rounded-lg border border-line bg-surface p-2 text-left transition hover:border-accent/40 hover:bg-raised"
                   >
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-sm font-medium text-slate-900">
+                      <span className="truncate text-sm font-medium text-ink">
                         {r.artist}
                       </span>
-                      <span className="shrink-0 text-xs tabular-nums text-slate-400">
+                      <span className="shrink-0 text-xs tabular-nums text-ink-3">
                         {r.date || "—"}
                       </span>
                     </div>
-                    <div className="truncate text-xs text-slate-500">
+                    <div className="truncate text-xs text-ink-2">
                       {[r.venue, r.city, r.country].filter(Boolean).join(" · ") ||
                         "Unknown venue"}
                     </div>
-                    <div className="mt-0.5 text-[11px] text-slate-400">
+                    <div className="mt-0.5 text-[11px] text-ink-3">
                       {r.songCount ? `${r.songCount} songs` : "no setlist"}
                       {r.tour ? ` · ${r.tour}` : ""}
                     </div>
@@ -340,12 +340,12 @@ export default function AddShowForm({
               type="button"
               onClick={handleImport}
               disabled={importing || !importUrl.trim()}
-              className="shrink-0 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+              className="shrink-0 rounded-full bg-cta px-3 py-2 text-sm font-semibold text-cta-ink transition hover:opacity-90 disabled:opacity-50"
             >
               {importing ? "…" : "Fetch"}
             </button>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-ink-3">
             We&apos;ll pull the artist, venue, date and setlist automatically.
           </p>
         </div>
@@ -353,21 +353,21 @@ export default function AddShowForm({
 
       {/* Confirmation note after a successful search/import. */}
       {!showDetails && importNote && (
-        <p className="text-xs text-emerald-700">{importNote}</p>
+        <p className="text-xs text-emerald-700 dark:text-emerald-400">{importNote}</p>
       )}
 
       {/* Detail fields — the manual entry / "Review & save" section. */}
       {showDetails && (
         <div className="space-y-3">
           {mode !== "manual" && (
-            <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
-              <p className="text-xs font-medium text-emerald-700">
+            <div className="flex items-center justify-between gap-2 border-t border-line pt-3">
+              <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
                 {importNote || "Review the details, then save."}
               </p>
               <button
                 type="button"
                 onClick={reset}
-                className="shrink-0 text-xs font-medium text-slate-400 hover:text-slate-600"
+                className="shrink-0 text-xs font-medium text-ink-3 hover:text-ink-2"
               >
                 Clear
               </button>
@@ -452,7 +452,7 @@ export default function AddShowForm({
           <div>
             <label className={labelClass} htmlFor="setlist">
               Setlist{" "}
-              <span className="font-normal text-slate-400">(one song per line)</span>
+              <span className="font-normal text-ink-3">(one song per line)</span>
             </label>
             <textarea
               id="setlist"
@@ -479,14 +479,14 @@ export default function AddShowForm({
           <div>
             <label className={labelClass}>
               Photos{" "}
-              <span className="font-normal text-slate-400">(optional)</span>
+              <span className="font-normal text-ink-3">(optional)</span>
             </label>
             <input
               type="file"
               accept="image/*"
               multiple
               onChange={(e) => setPhotos(Array.from(e.target.files ?? []))}
-              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
+              className="block w-full text-sm text-ink-2 file:mr-3 file:rounded-lg file:border-0 file:bg-raised file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ink hover:file:bg-line"
             />
             {photos.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -496,7 +496,7 @@ export default function AddShowForm({
                     key={i}
                     src={URL.createObjectURL(f)}
                     alt=""
-                    className="h-14 w-14 rounded-md object-cover ring-1 ring-slate-200"
+                    className="h-14 w-14 rounded-md object-cover ring-1 ring-line"
                   />
                 ))}
               </div>
@@ -506,7 +506,7 @@ export default function AddShowForm({
           <div>
             <label className={labelClass} htmlFor="videos">
               YouTube videos{" "}
-              <span className="font-normal text-slate-400">(one link per line)</span>
+              <span className="font-normal text-ink-3">(one link per line)</span>
             </label>
             <textarea
               id="videos"
@@ -518,7 +518,7 @@ export default function AddShowForm({
           </div>
 
           {error && (
-            <p className="text-sm text-red-600" role="alert">
+            <p className="text-sm text-red-600 dark:text-red-400" role="alert">
               {error}
             </p>
           )}
@@ -526,11 +526,11 @@ export default function AddShowForm({
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:opacity-60"
+            className="w-full rounded-full bg-cta px-4 py-2 text-sm font-semibold text-cta-ink transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent/40 disabled:opacity-60"
           >
             {busy ? "Finding location & saving…" : "Add show"}
           </button>
-          <p className="text-center text-xs text-slate-400">
+          <p className="text-center text-xs text-ink-3">
             We&apos;ll look up the venue&apos;s coordinates to place your pin.
           </p>
         </div>
@@ -538,7 +538,7 @@ export default function AddShowForm({
 
       {/* Errors that occur before the detail fields are shown (search/import). */}
       {!showDetails && error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {error}
         </p>
       )}
