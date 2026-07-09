@@ -1,7 +1,13 @@
 import { createClient } from "./supabase/client";
-import type { ShowMedia } from "./types";
+import type { Show, ShowMedia } from "./types";
 
 const BUCKET = "concert-photos";
+
+/** Display URL of a show's first photo, or null if it has none. */
+export function firstPhotoSrc(show: Pick<Show, "show_media">): string | null {
+  const photo = (show.show_media ?? []).find((m) => m.kind === "photo");
+  return photo ? mediaSrc(photo) : null;
+}
 
 /** Extract an 11-char YouTube id from a URL or bare id; null if not found. */
 export function parseYouTubeId(input: string): string | null {

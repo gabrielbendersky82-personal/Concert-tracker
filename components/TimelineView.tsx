@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import AppNav from "./AppNav";
 import GuestBar from "./GuestBar";
+import { firstPhotoSrc } from "@/lib/media";
 import type { Show } from "@/lib/types";
 
 // Decorative circle hues (not data encoding — a fun, varied look).
@@ -78,10 +79,11 @@ function ArtistAvatar({ name, hue }: { name: string; hue: string }) {
 function ShowCard({ show, hue }: { show: Show; hue: string }) {
   const location =
     [show.city, show.country].filter(Boolean).join(", ") || show.venue || "—";
+  const photo = firstPhotoSrc(show);
   return (
-    <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
-      <div className="absolute inset-y-0 left-0 w-1.5" style={{ background: hue }} />
-      <div className="py-2.5 pl-4 pr-3">
+    <div className="group relative flex items-stretch overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="w-1.5 shrink-0" style={{ background: hue }} />
+      <div className="min-w-0 flex-1 py-2.5 pl-2.5 pr-3">
         <div className="truncate text-sm font-semibold text-slate-900">
           {show.artist}
         </div>
@@ -93,6 +95,15 @@ function ShowCard({ show, hue }: { show: Show; hue: string }) {
           <span className="truncate">{location}</span>
         </div>
       </div>
+      {photo && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={photo}
+          alt=""
+          loading="lazy"
+          className="my-2 mr-2 h-14 w-14 shrink-0 self-center rounded-lg object-cover"
+        />
+      )}
     </div>
   );
 }

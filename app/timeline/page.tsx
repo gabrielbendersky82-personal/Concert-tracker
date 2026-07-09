@@ -17,12 +17,23 @@ export default async function TimelinePage() {
     .maybeSingle();
   if (!profile) redirect("/welcome");
 
-  const { data } = await supabase
+  const cols = "id, artist, venue, city, country, show_date";
+  // Include photos for the card thumbnails; fall back if show_media isn't
+  // present yet (migration 0004 not applied).
+  const withMedia = await supabase
     .from("shows")
-    .select("id, artist, venue, city, country, show_date")
+    .select(`${cols}, show_media(*)`)
     .order("show_date", { ascending: true });
+  const rows = withMedia.error
+    ? (
+        await supabase
+          .from("shows")
+          .select(cols)
+          .order("show_date", { ascending: true })
+      ).data
+    : withMedia.data;
 
   return (
-    <TimelineView shows={(data ?? []) as Show[]} handle={profile.handle} />
+    <TimelineView shows={(rows ?? []) as Show[]} handle={profile.handle} />
   );
 }

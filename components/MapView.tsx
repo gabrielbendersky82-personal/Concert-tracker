@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { firstPhotoSrc } from "@/lib/media";
 import type { Show } from "@/lib/types";
 
 // Custom SVG pin so we don't depend on Leaflet's bundled marker images.
@@ -92,7 +93,15 @@ export default function MapView({
           eventHandlers={{ click: () => onSelect(show.id) }}
         >
           <Popup>
-            <div className="text-sm">
+            <div className="w-44 text-sm">
+              {firstPhotoSrc(show) && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={firstPhotoSrc(show) as string}
+                  alt=""
+                  className="mb-1.5 h-24 w-full rounded-md object-cover"
+                />
+              )}
               <div className="font-semibold text-slate-900">{show.artist}</div>
               {show.venue && <div className="text-slate-600">{show.venue}</div>}
               <div className="text-slate-500">
