@@ -406,6 +406,9 @@ export default function ConcertApp({
   );
 }
 
+type SortKey = "date" | "artist";
+type SortDir = "asc" | "desc";
+
 function ShowsList({
   shows,
   loading,
@@ -417,6 +420,35 @@ function ShowsList({
   onSelect: (id: string) => void;
   attendeeOf?: (show: Show) => { label: string; color: string } | null;
 }) {
+  // Default: latest concerts first.
+  const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  const sorted = useMemo(() => {
+    const arr = [...shows];
+    arr.sort((a, b) => {
+      const r =
+        sortKey === "date"
+          ? a.show_date.localeCompare(b.show_date)
+          : a.artist.localeCompare(b.artist, undefined, { sensitivity: "base" });
+      return sortDir === "asc" ? r : -r;
+    });
+    return arr;
+  }, [shows, sortKey, sortDir]);
+
+  function toggle(key: SortKey) {
+    if (key === sortKey) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      // Sensible starting direction per column.
+      setSortDir(key === "date" ? "desc" : "asc");
+    }
+  }
+
+  const arrowFor = (col: SortKey) =>
+    col !== sortKey ? "↕" : sortDir === "asc" ? "↑" : "↓";
+
   if (loading) {
     return <p className="text-sm text-slate-400">Loading…</p>;
   }
@@ -428,37 +460,63 @@ function ShowsList({
     );
   }
   return (
-    <ul className="space-y-1">
-      {shows.map((show) => (
-        <li key={show.id}>
-          <button
-            onClick={() => onSelect(show.id)}
-            className="w-full rounded-lg px-2 py-2 text-left transition hover:bg-slate-50"
-          >
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="flex min-w-0 items-center gap-1.5">
-                {attendeeOf?.(show) && (
-                  <span
-                    className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ background: attendeeOf(show)!.color }}
-                    title={attendeeOf(show)!.label}
-                  />
-                )}
-                <span className="truncate font-medium text-slate-800">
-                  {show.artist}
+    <div>
+      {/* Sortable column headers */}
+      <div className="mb-1 flex items-center justify-between border-b border-slate-100 px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+        <button
+          type="button"
+          onClick={() => toggle("artist")}
+          className="flex items-center gap-1 transition hover:text-slate-700"
+        >
+          Concert{" "}
+          <span className={sortKey === "artist" ? "" : "text-slate-300"}>
+            {arrowFor("artist")}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => toggle("date")}
+          className="flex items-center gap-1 transition hover:text-slate-700"
+        >
+          Date{" "}
+          <span className={sortKey === "date" ? "" : "text-slate-300"}>
+            {arrowFor("date")}
+          </span>
+        </button>
+      </div>
+
+      <ul className="space-y-1">
+        {sorted.map((show) => (
+          <li key={show.id}>
+            <button
+              onClick={() => onSelect(show.id)}
+              className="w-full rounded-lg px-2 py-2 text-left transition hover:bg-slate-50"
+            >
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-1.5">
+                  {attendeeOf?.(show) && (
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ background: attendeeOf(show)!.color }}
+                      title={attendeeOf(show)!.label}
+                    />
+                  )}
+                  <span className="truncate font-medium text-slate-800">
+                    {show.artist}
+                  </span>
                 </span>
-              </span>
-              <span className="shrink-0 text-xs tabular-nums text-slate-400">
-                {show.show_date.slice(0, 4)}
-              </span>
-            </div>
-            <div className="truncate text-xs text-slate-500">
-              {attendeeOf?.(show) ? `${attendeeOf(show)!.label} · ` : ""}
-              {[show.venue, show.city].filter(Boolean).join(" · ") || "—"}
-            </div>
-          </button>
-        </li>
-      ))}
-    </ul>
+                <span className="shrink-0 text-xs tabular-nums text-slate-400">
+                  {show.show_date.slice(0, 4)}
+                </span>
+              </div>
+              <div className="truncate text-xs text-slate-500">
+                {attendeeOf?.(show) ? `${attendeeOf(show)!.label} · ` : ""}
+                {[show.venue, show.city].filter(Boolean).join(" · ") || "—"}
+              </div>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
