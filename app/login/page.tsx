@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -89,8 +90,9 @@ export default function LoginPage() {
 
   if (view === "choose") {
     return (
-      <main className="flex min-h-dvh flex-col items-center justify-center bg-slate-50 px-4 py-10">
-        <div className="w-full max-w-2xl">
+      <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-slate-50 px-4 py-10">
+        <Backdrop />
+        <div className="relative z-10 w-full max-w-2xl">
           <div className="mb-8 text-center">
             <div className="mb-2 text-4xl" aria-hidden>
               📍🎶
@@ -150,8 +152,9 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-slate-50 px-4">
+      <Backdrop />
+      <div className="relative z-10 w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <button
           type="button"
           onClick={() => setView("choose")}
@@ -302,6 +305,23 @@ export default function LoginPage() {
         )}
       </div>
     </main>
+  );
+}
+
+// Faded concert photo behind the login content (same image as the map hero).
+function Backdrop() {
+  return (
+    <>
+      <Image
+        src="/hero.jpg"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="pointer-events-none select-none object-cover opacity-[0.14]"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-50/75 via-slate-50/55 to-slate-50/85" />
+    </>
   );
 }
 
