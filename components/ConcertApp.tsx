@@ -252,7 +252,7 @@ export default function ConcertApp({
 
       {/* Sidebar / bottom sheet */}
       <aside
-        className={`absolute inset-x-0 bottom-14 z-[1000] flex max-h-[78vh] flex-col rounded-t-2xl bg-white shadow-2xl transition-transform duration-300 md:static md:bottom-0 md:h-full md:max-h-none md:w-[380px] md:translate-y-0 md:rounded-none md:border-l md:border-slate-200 md:shadow-none ${
+        className={`absolute inset-x-0 bottom-14 z-[1000] flex max-h-[78vh] flex-col rounded-t-2xl bg-white shadow-2xl transition-transform duration-300 md:static md:bottom-0 md:h-full md:max-h-none md:w-[420px] md:translate-y-0 md:rounded-none md:border-l md:border-slate-200 md:shadow-none ${
           sheetOpen ? "translate-y-0" : "translate-y-[calc(100%-3.75rem)]"
         } md:translate-y-0`}
       >
@@ -264,7 +264,7 @@ export default function ConcertApp({
           >
             <BrandMark className="h-7 w-7" />
             <div className="min-w-0">
-              <h1 className="text-base font-semibold leading-tight text-slate-900">
+              <h1 className="whitespace-nowrap text-base font-semibold leading-tight text-slate-900">
                 Concert Map
               </h1>
               <p className="truncate text-xs leading-tight text-slate-400">
