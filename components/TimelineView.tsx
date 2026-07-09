@@ -43,7 +43,7 @@ function fmtDate(iso: string): string {
 function PinGlyph() {
   return (
     <svg
-      className="h-3 w-3 shrink-0 text-slate-400"
+      className="h-3 w-3 shrink-0 text-ink-3"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -60,7 +60,7 @@ function ArtistAvatar({ name, hue }: { name: string; hue: string }) {
   const initial = (name || "?").charAt(0).toUpperCase();
   return (
     <span
-      className="relative grid h-9 w-9 place-items-center overflow-hidden rounded-full text-xs font-bold text-white shadow ring-4 ring-slate-50"
+      className="relative grid h-9 w-9 place-items-center overflow-hidden rounded-full text-xs font-bold text-white shadow ring-4 ring-surface"
       style={{ background: hue }}
     >
       {initial}
@@ -83,16 +83,16 @@ function ShowCard({ show, hue }: { show: Show; hue: string }) {
     [show.city, show.country].filter(Boolean).join(", ") || show.venue || "—";
   const photo = firstPhotoSrc(show);
   return (
-    <div className="group relative flex items-stretch overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="group relative flex items-stretch overflow-hidden rounded-xl bg-surface shadow-sm ring-1 ring-line transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <div className="w-1.5 shrink-0" style={{ background: hue }} />
       <div className="min-w-0 flex-1 py-2.5 pl-2.5 pr-3">
-        <div className="truncate text-sm font-semibold text-slate-900">
+        <div className="truncate text-sm font-semibold text-ink">
           {show.artist}
         </div>
-        <div className="text-xs tabular-nums text-slate-500">
+        <div className="text-xs tabular-nums text-ink-2">
           {fmtDate(show.show_date)}
         </div>
-        <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-400">
+        <div className="mt-0.5 flex items-center gap-1 text-xs text-ink-3">
           <PinGlyph />
           <span className="truncate">{location}</span>
         </div>
@@ -113,7 +113,7 @@ function ShowCard({ show, hue }: { show: Show; hue: string }) {
 function YearMarker({ year, count }: { year: string; count: number }) {
   return (
     <div className="tl-reveal relative my-7 flex pl-3 md:justify-center md:pl-0">
-      <span className="rounded-full bg-gradient-to-r from-indigo-600 to-pink-500 px-4 py-1.5 text-sm font-bold text-white shadow-md">
+      <span className="rounded-full border border-accent bg-surface px-4 py-1.5 text-sm font-bold tabular-nums text-accent shadow-sm">
         {year} · {count} show{count === 1 ? "" : "s"}
       </span>
     </div>
@@ -215,8 +215,13 @@ export default function TimelineView({
     );
     try {
       const { toPng } = await import("html-to-image");
+      // Match the on-screen theme so dark exports aren't white-framed.
+      const bg =
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--ground")
+          .trim() || "#ffffff";
       return await toPng(node, {
-        backgroundColor: "#ffffff",
+        backgroundColor: bg,
         pixelRatio: 2,
         cacheBust: true,
       });
@@ -279,7 +284,7 @@ export default function TimelineView({
   }
 
   return (
-    <main className="min-h-dvh bg-slate-50">
+    <main className="min-h-dvh bg-ground">
       <style>{CSS}</style>
       {guest ? (
         <GuestBar
@@ -293,10 +298,10 @@ export default function TimelineView({
       <div className="mx-auto max-w-3xl px-4 py-8 pb-24 sm:px-6 md:pb-10">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
               Your Concert Timeline
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-ink-2">
               {ordered.length
                 ? `${ordered.length} show${ordered.length === 1 ? "" : "s"} · ${yearsLabel}`
                 : "No shows yet."}
@@ -306,7 +311,7 @@ export default function TimelineView({
                 {attendees!.map((a) => (
                   <span
                     key={a.id}
-                    className="flex items-center gap-1.5 text-xs font-medium text-slate-600"
+                    className="flex items-center gap-1.5 text-xs font-medium text-ink-2"
                   >
                     <span
                       className="h-2.5 w-2.5 rounded-full"
@@ -327,14 +332,14 @@ export default function TimelineView({
                 <button
                   onClick={handleExport}
                   disabled={!!busy}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                  className="rounded-lg border border-line-2 px-4 py-2 text-sm font-medium text-ink-2 transition hover:bg-raised disabled:opacity-50"
                 >
                   {busy === "export" ? "Rendering…" : "Export image"}
                 </button>
                 <button
                   onClick={handleShare}
                   disabled={!!busy}
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                  className="rounded-full bg-cta px-4 py-2 text-sm font-semibold text-cta-ink transition hover:opacity-90 disabled:opacity-50"
                 >
                   {busy === "share" ? "Rendering…" : "Share"}
                 </button>
@@ -344,17 +349,17 @@ export default function TimelineView({
         </div>
 
         {ordered.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
+          <div className="rounded-2xl border border-line bg-surface p-10 text-center">
             <div className="mb-2 text-3xl" aria-hidden>
               🎶
             </div>
-            <p className="font-medium text-slate-800">Your timeline is empty</p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="font-medium text-ink">Your timeline is empty</p>
+            <p className="mt-1 text-sm text-ink-2">
               Add or import a few shows and they&apos;ll appear here by year.
             </p>
             <Link
               href="/"
-              className="mt-4 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              className="mt-4 inline-block rounded-full bg-cta px-4 py-2 text-sm font-semibold text-cta-ink transition hover:opacity-90"
             >
               Add shows
             </Link>
@@ -362,13 +367,13 @@ export default function TimelineView({
         ) : (
           <div
             ref={captureRef}
-            className={`rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 ${
+            className={`rounded-2xl border border-line bg-surface p-5 sm:p-6 ${
               capturing ? "tl-capture" : ""
             }`}
           >
             <div className="mb-2 flex items-center gap-2">
               <BrandMark className="h-7 w-7" />
-              <span className="text-sm font-semibold text-slate-700">
+              <span className="text-sm font-semibold text-ink-2">
                 @{handle}&apos;s concert timeline
               </span>
             </div>
@@ -381,7 +386,7 @@ export default function TimelineView({
               {items}
             </div>
 
-            <div className="mt-4 text-right text-[11px] text-slate-400">
+            <div className="mt-4 text-right text-[11px] text-ink-3">
               Made with Concert Map
             </div>
           </div>

@@ -59,7 +59,7 @@ export default function DashboardView({
     : 1;
 
   return (
-    <main className="min-h-dvh bg-slate-50">
+    <main className="min-h-dvh bg-ground">
       {guest ? (
         <GuestBar
           active="dashboard"
@@ -73,10 +73,10 @@ export default function DashboardView({
         {/* Header */}
         <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
               Your Concert Dashboard
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-ink-2">
               {empty
                 ? "No shows logged yet."
                 : `${data.totalShows} show${data.totalShows === 1 ? "" : "s"} · ${data.uniqueArtists} artist${data.uniqueArtists === 1 ? "" : "s"} · ${data.uniqueCountries} countr${data.uniqueCountries === 1 ? "y" : "ies"}`}
@@ -88,17 +88,17 @@ export default function DashboardView({
         </div>
 
         {empty ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
+          <div className="rounded-2xl border border-line bg-surface p-10 text-center">
             <div className="mb-2 text-3xl" aria-hidden>
               📊
             </div>
-            <p className="font-medium text-slate-800">Nothing to chart yet</p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="font-medium text-ink">Nothing to chart yet</p>
+            <p className="mt-1 text-sm text-ink-2">
               Add or import a few shows, then come back to see your stats.
             </p>
             <Link
               href="/"
-              className="mt-4 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              className="mt-4 inline-block rounded-full bg-cta px-4 py-2 text-sm font-semibold text-cta-ink transition hover:opacity-90"
             >
               Go add shows
             </Link>
@@ -107,7 +107,7 @@ export default function DashboardView({
           <>
             {/* KPI row */}
             <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <KpiTile label="Shows" value={data.totalShows} />
+              <KpiTile label="Shows" value={data.totalShows} accent />
               <KpiTile label="Artists" value={data.uniqueArtists} />
               <KpiTile label="Venues" value={data.uniqueVenues} />
               <KpiTile label="Cities" value={data.uniqueCities} />
@@ -132,14 +132,14 @@ export default function DashboardView({
                   <ul className="space-y-2.5">
                     {breakdown.map((a) => (
                       <li key={a.label} className="flex items-center gap-3">
-                        <span className="flex w-16 shrink-0 items-center gap-1.5 text-sm font-medium text-slate-700">
+                        <span className="flex w-16 shrink-0 items-center gap-1.5 text-sm font-medium text-ink-2">
                           <span
                             className="h-2.5 w-2.5 rounded-full"
                             style={{ background: a.color }}
                           />
                           {a.label}
                         </span>
-                        <span className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
+                        <span className="h-3 flex-1 overflow-hidden rounded-full bg-raised">
                           <span
                             className="block h-full rounded-full"
                             style={{
@@ -148,7 +148,7 @@ export default function DashboardView({
                             }}
                           />
                         </span>
-                        <span className="w-6 shrink-0 text-right text-sm tabular-nums text-slate-500">
+                        <span className="w-6 shrink-0 text-right text-sm tabular-nums text-ink-2">
                           {a.count}
                         </span>
                       </li>

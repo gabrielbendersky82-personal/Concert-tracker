@@ -1,7 +1,7 @@
 import type { DashboardData, RankItem } from "@/lib/stats";
 
-// Custom SVG/CSS charts — single indigo hue (magnitude), recessive slate grid,
-// direct value labels, tabular numerals. No charting library.
+// Custom SVG/CSS charts — quiet neutral bars with the maximum emphasized in
+// the gold accent, direct value labels, tabular numerals. No charting library.
 
 export function Card({
   title,
@@ -16,12 +16,12 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-slate-200 bg-white p-5 ${className ?? ""}`}
+      className={`rounded-2xl border border-line bg-surface p-5 ${className ?? ""}`}
     >
-      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
         {title}
       </h3>
-      {subtitle && <p className="mt-0.5 text-xs text-slate-400">{subtitle}</p>}
+      {subtitle && <p className="mt-0.5 text-xs text-ink-3">{subtitle}</p>}
       <div className="mt-4">{children}</div>
     </div>
   );
@@ -31,26 +31,33 @@ export function KpiTile({
   label,
   value,
   sub,
+  accent = false,
 }: {
   label: string;
   value: string | number;
   sub?: string;
+  /** Headline tile — renders the value in the gold accent. */
+  accent?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+    <div className="rounded-2xl border border-line bg-surface p-4">
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
         {label}
       </div>
-      <div className="mt-1 truncate text-2xl font-bold tabular-nums text-slate-900">
+      <div
+        className={`mt-1 truncate text-2xl font-extrabold tabular-nums ${
+          accent ? "text-accent" : "text-ink"
+        }`}
+      >
         {value}
       </div>
-      {sub && <div className="truncate text-xs text-slate-500">{sub}</div>}
+      {sub && <div className="truncate text-xs text-ink-2">{sub}</div>}
     </div>
   );
 }
 
 function EmptyNote({ children }: { children: React.ReactNode }) {
-  return <p className="py-6 text-center text-sm text-slate-400">{children}</p>;
+  return <p className="py-6 text-center text-sm text-ink-3">{children}</p>;
 }
 
 /** Vertical bars for a small ordered series (years, months). */
@@ -73,12 +80,16 @@ export function ColumnBars({
             title={`${d.label}: ${d.count}`}
           >
             {d.count > 0 && (
-              <span className="text-[11px] font-medium tabular-nums text-slate-500">
+              <span className="text-[11px] font-medium tabular-nums text-ink-2">
                 {d.count}
               </span>
             )}
             <div
-              className="w-full rounded-t-md bg-gradient-to-t from-indigo-500 to-indigo-400 transition group-hover:from-indigo-600 group-hover:to-indigo-500"
+              className={`w-full rounded-t-md transition ${
+                d.count === max
+                  ? "bg-accent"
+                  : "bg-ink-3/30 group-hover:bg-ink-3/50"
+              }`}
               style={{ height: `${(d.count / max) * 88}%`, minHeight: d.count ? 4 : 0 }}
             />
           </div>
@@ -88,7 +99,7 @@ export function ColumnBars({
         {items.map((d) => (
           <span
             key={d.label}
-            className="flex-1 text-center text-[10px] tabular-nums text-slate-400"
+            className="flex-1 text-center text-[10px] tabular-nums text-ink-3"
           >
             {tick ? tick(d.label) : d.label}
           </span>
@@ -110,16 +121,20 @@ export function RankedBars({ items }: { items: RankItem[] }) {
           className="group flex items-center gap-3"
           title={`${it.label}: ${it.count}`}
         >
-          <span className="w-28 shrink-0 truncate text-sm text-slate-600">
+          <span className="w-28 shrink-0 truncate text-sm text-ink-2">
             {it.label}
           </span>
-          <div className="h-5 flex-1 overflow-hidden rounded-md bg-slate-100">
+          <div className="h-5 flex-1 overflow-hidden rounded-md bg-raised">
             <div
-              className="h-full rounded-md bg-gradient-to-r from-indigo-500 to-indigo-400 transition group-hover:from-indigo-600 group-hover:to-indigo-500"
+              className={`h-full rounded-md transition ${
+                it.count === max
+                  ? "bg-accent"
+                  : "bg-ink-3/30 group-hover:bg-ink-3/50"
+              }`}
               style={{ width: `${(it.count / max) * 100}%`, minWidth: 6 }}
             />
           </div>
-          <span className="w-6 shrink-0 text-right text-sm font-medium tabular-nums text-slate-500">
+          <span className="w-6 shrink-0 text-right text-sm font-medium tabular-nums text-ink-2">
             {it.count}
           </span>
         </div>
@@ -152,16 +167,17 @@ export function AreaLine({ data }: { data: { year: string; total: number }[] }) 
           className="h-40 w-full"
         >
           <defs>
+            {/* SVG presentation attributes can't take var() — set via style */}
             <linearGradient id="cm-area" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#6366f1" stopOpacity="0.28" />
-              <stop offset="1" stopColor="#6366f1" stopOpacity="0" />
+              <stop offset="0" style={{ stopColor: "var(--accent)" }} stopOpacity="0.28" />
+              <stop offset="1" style={{ stopColor: "var(--accent)" }} stopOpacity="0" />
             </linearGradient>
           </defs>
           <path d={area} fill="url(#cm-area)" />
           <path
             d={line}
             fill="none"
-            stroke="#4f46e5"
+            style={{ stroke: "var(--accent)" }}
             strokeWidth={2}
             vectorEffect="non-scaling-stroke"
             strokeLinejoin="round"
@@ -172,12 +188,12 @@ export function AreaLine({ data }: { data: { year: string; total: number }[] }) 
           className="absolute -translate-x-1/2 -translate-y-1/2"
           style={{ left: `${last.x}%`, top: `${last.y}%` }}
         >
-          <span className="block h-2.5 w-2.5 rounded-full bg-indigo-600 ring-2 ring-white" />
+          <span className="block h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-surface" />
         </div>
       </div>
-      <div className="mt-2 flex justify-between text-[10px] tabular-nums text-slate-400">
+      <div className="mt-2 flex justify-between text-[10px] tabular-nums text-ink-3">
         <span>{data[0].year}</span>
-        <span className="font-medium text-slate-500">
+        <span className="font-medium text-ink-2">
           {data[n - 1].total} total
         </span>
         <span>{data[n - 1].year}</span>
@@ -227,14 +243,14 @@ export function Milestones({ m }: { m: DashboardData["milestones"] }) {
   return (
     <div className="grid grid-cols-2 gap-3">
       {items.map((it) => (
-        <div key={it.k} className="rounded-xl bg-slate-50 p-3">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div key={it.k} className="rounded-xl bg-raised p-3">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
             {it.k}
           </div>
-          <div className="mt-0.5 truncate text-base font-semibold text-slate-900">
+          <div className="mt-0.5 truncate text-base font-semibold text-ink">
             {it.v}
           </div>
-          <div className="truncate text-xs text-slate-500">{it.s}</div>
+          <div className="truncate text-xs text-ink-2">{it.s}</div>
         </div>
       ))}
     </div>
