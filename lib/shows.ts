@@ -1,31 +1,44 @@
 import { createClient } from "./supabase/client";
 import type { NewShowInput, Show } from "./types";
 
+const SELECT_WITH_MEDIA = "*, setlist_songs(*), show_media(*)";
+const SELECT_NO_MEDIA = "*, setlist_songs(*)";
+
+/**
+ * Select shows, retrying without the `show_media` embed if that table isn't
+ * present yet (migration 0004). Keeps the app working before the migration is
+ * applied; media simply won't appear until then.
+ */
+async function selectShows(
+  build: (select: string) => PromiseLike<{ data: unknown; error: unknown }>
+): Promise<Show[]> {
+  let { data, error } = await build(SELECT_WITH_MEDIA);
+  if (error) {
+    ({ data, error } = await build(SELECT_NO_MEDIA));
+    if (error) throw error;
+  }
+  const rows = (data as Parameters<typeof sortShowRelations>[0][]) ?? [];
+  return rows.map(sortShowRelations) as Show[];
+}
+
 /** Fetch the signed-in user's shows with setlists (RLS scopes to the owner). */
 export async function fetchShows(): Promise<Show[]> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("shows")
-    .select("*, setlist_songs(*), show_media(*)")
-    .order("show_date", { ascending: false });
-
-  if (error) throw error;
-
-  return (data ?? []).map(sortShowRelations) as Show[];
+  return selectShows((select) =>
+    supabase.from("shows").select(select).order("show_date", { ascending: false })
+  );
 }
 
 /** Fetch a specific user's shows (RLS permits this only for accepted friends). */
 export async function fetchShowsFor(userId: string): Promise<Show[]> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("shows")
-    .select("*, setlist_songs(*), show_media(*)")
-    .eq("user_id", userId)
-    .order("show_date", { ascending: false });
-
-  if (error) throw error;
-
-  return (data ?? []).map(sortShowRelations) as Show[];
+  return selectShows((select) =>
+    supabase
+      .from("shows")
+      .select(select)
+      .eq("user_id", userId)
+      .order("show_date", { ascending: false })
+  );
 }
 
 /** Sort a show's setlist songs and media by position. */
