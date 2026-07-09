@@ -179,41 +179,41 @@ export default function FriendProfileView({
           <button
             onClick={() => action(() => sendRequest(profile.id))}
             disabled={busy}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+            className="rounded-full bg-cta px-4 py-2 text-sm font-semibold text-cta-ink transition hover:opacity-90 disabled:opacity-60"
           >
             Add friend
           </button>
         );
       case "pending_outgoing":
-        return <span className="text-sm text-slate-400">Request sent</span>;
+        return <span className="text-sm text-ink-3">Request sent</span>;
       case "pending_incoming":
         return (
           <div className="flex gap-2">
             <button
               onClick={() => action(() => respond(true))}
               disabled={busy}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+              className="rounded-full bg-cta px-4 py-2 text-sm font-semibold text-cta-ink transition hover:opacity-90 disabled:opacity-60"
             >
               Accept request
             </button>
             <button
               onClick={() => action(() => respond(false))}
               disabled={busy}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              className="rounded-lg border border-line-2 px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-raised"
             >
               Decline
             </button>
           </div>
         );
       case "accepted":
-        return <span className="text-sm font-medium text-emerald-600">✓ Friends</span>;
+        return <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">✓ Friends</span>;
       default:
         return null;
     }
   };
 
   return (
-    <main className="min-h-dvh bg-slate-50">
+    <main className="min-h-dvh bg-ground">
       {guest || !myHandle ? (
         <GuestBar />
       ) : (
@@ -221,16 +221,16 @@ export default function FriendProfileView({
       )}
       <div className="mx-auto max-w-5xl px-4 py-8 pb-24 sm:px-6 md:pb-8">
         {/* Profile header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-5">
           <div className="flex items-center gap-3">
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-indigo-100 text-lg font-semibold text-indigo-700">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-indigo-500/15 text-lg font-semibold text-indigo-600 dark:text-indigo-300">
               {(profile.display_name || profile.handle).charAt(0).toUpperCase()}
             </span>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">
+              <h1 className="text-xl font-bold text-ink">
                 {profile.display_name || profile.handle}
               </h1>
-              <p className="text-sm text-slate-400">@{profile.handle}</p>
+              <p className="text-sm text-ink-3">@{profile.handle}</p>
             </div>
           </div>
           {!isSelf && !guest && stateAction()}
@@ -238,12 +238,12 @@ export default function FriendProfileView({
 
         {/* Own-profile sharing controls */}
         {isSelf && (
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-4">
             <div>
-              <p className="text-sm font-medium text-slate-800">
+              <p className="text-sm font-medium text-ink">
                 {isPublic ? "Your profile is public" : "Your profile is private"}
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-ink-2">
                 {isPublic
                   ? "Anyone with the link can view your map — no account needed."
                   : "Only accepted friends can see your shows."}
@@ -253,7 +253,7 @@ export default function FriendProfileView({
               {isPublic && (
                 <button
                   onClick={copyLink}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                  className="rounded-lg border border-line-2 px-3 py-2 text-sm font-medium text-ink-2 transition hover:bg-raised"
                 >
                   {copied ? "Copied!" : "Copy share link"}
                 </button>
@@ -261,10 +261,10 @@ export default function FriendProfileView({
               <button
                 onClick={toggleVisibility}
                 disabled={savingVis}
-                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-60 ${
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${
                   isPublic
-                    ? "bg-slate-600 hover:bg-slate-700"
-                    : "bg-indigo-600 hover:bg-indigo-700"
+                    ? "border border-line-2 text-ink-2 hover:bg-raised"
+                    : "bg-cta text-cta-ink hover:opacity-90"
                 }`}
               >
                 {savingVis
@@ -278,16 +278,16 @@ export default function FriendProfileView({
         )}
 
         {loading ? (
-          <p className="mt-6 text-sm text-slate-400">Loading…</p>
+          <p className="mt-6 text-sm text-ink-3">Loading…</p>
         ) : !canView ? (
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-10 text-center">
+          <div className="mt-6 rounded-2xl border border-line bg-surface p-10 text-center">
             <div className="mb-2 text-3xl" aria-hidden>
               🔒
             </div>
-            <p className="font-medium text-slate-800">
+            <p className="font-medium text-ink">
               {profile.display_name || profile.handle}&apos;s shows are private
             </p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-ink-2">
               {state === "pending_outgoing"
                 ? "Once they accept your request, you'll see their map and the concerts you've both attended."
                 : state === "pending_incoming"
@@ -299,31 +299,31 @@ export default function FriendProfileView({
           <>
             {/* Mutual concerts */}
             {!isSelf && !guest && (
-              <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
-                <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <section className="mt-4 rounded-2xl border border-line bg-surface p-5">
+                <h2 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
                   Concerts in common ({mutual.length})
                 </h2>
                 {mutual.length === 0 ? (
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-2 text-sm text-ink-2">
                     No shared concerts yet — as you both log more shows, matches
                     (same artist, date &amp; city) will appear here.
                   </p>
                 ) : (
-                  <ul className="mt-3 divide-y divide-slate-100">
+                  <ul className="mt-3 divide-y divide-line">
                     {mutual.map((s) => (
                       <li key={s.id} className="flex items-center gap-3 py-2">
                         <span className="text-lg" aria-hidden>
                           🎟️
                         </span>
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium text-slate-900">
+                          <div className="truncate text-sm font-medium text-ink">
                             {s.artist}
                           </div>
-                          <div className="truncate text-xs text-slate-500">
+                          <div className="truncate text-xs text-ink-2">
                             {[s.venue, s.city].filter(Boolean).join(" · ")}
                           </div>
                         </div>
-                        <span className="shrink-0 text-xs tabular-nums text-slate-400">
+                        <span className="shrink-0 text-xs tabular-nums text-ink-3">
                           {fmtDate(s.show_date)}
                         </span>
                       </li>
@@ -341,11 +341,11 @@ export default function FriendProfileView({
                 { label: "Countries", value: stats.countries },
                 { label: "Songs seen", value: stats.totalSongs },
               ].map((k) => (
-                <div key={k.label} className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <div key={k.label} className="rounded-2xl border border-line bg-surface p-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
                     {k.label}
                   </div>
-                  <div className="mt-1 text-2xl font-bold tabular-nums text-slate-900">
+                  <div className="mt-1 text-2xl font-bold tabular-nums text-ink">
                     {k.value}
                   </div>
                 </div>
@@ -353,9 +353,9 @@ export default function FriendProfileView({
             </div>
 
             {/* Their map (overlays your shows too when comparing) */}
-            <div className="mt-4 h-[440px] overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div className="mt-4 h-[440px] overflow-hidden rounded-2xl border border-line bg-surface">
               {mapShows.length === 0 ? (
-                <div className="flex h-full items-center justify-center text-sm text-slate-400">
+                <div className="flex h-full items-center justify-center text-sm text-ink-3">
                   No shows on the map yet.
                 </div>
               ) : (
@@ -373,7 +373,7 @@ export default function FriendProfileView({
 
             {/* Detail for a clicked pin — read-only (photos, videos, setlist). */}
             {selectedShow && (
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
+              <div className="mt-4 rounded-2xl border border-line bg-surface p-5">
                 <ShowDetail
                   show={selectedShow}
                   onClose={() => setSelectedId(null)}

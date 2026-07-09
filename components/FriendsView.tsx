@@ -18,7 +18,7 @@ function Avatar({ profile }: { profile: Profile }) {
     .charAt(0)
     .toUpperCase();
   return (
-    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-indigo-500/15 text-sm font-semibold text-indigo-600 dark:text-indigo-300">
       {letter}
     </span>
   );
@@ -37,10 +37,10 @@ function PersonRow({
     <>
       <Avatar profile={profile} />
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-medium text-slate-900">
+        <div className="truncate text-sm font-medium text-ink">
           {profile.display_name || profile.handle}
         </div>
-        <div className="truncate text-xs text-slate-400">@{profile.handle}</div>
+        <div className="truncate text-xs text-ink-3">@{profile.handle}</div>
       </div>
       {right}
     </>
@@ -48,7 +48,7 @@ function PersonRow({
   return href ? (
     <Link
       href={href}
-      className="flex items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-slate-50"
+      className="flex items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-raised"
     >
       {inner}
     </Link>
@@ -125,22 +125,22 @@ export default function FriendsView({
   ]);
 
   return (
-    <main className="min-h-dvh bg-slate-50">
+    <main className="min-h-dvh bg-ground">
       <AppNav active="friends" handle={myHandle} />
       <div className="mx-auto max-w-2xl px-4 py-8 pb-24 sm:px-6 md:pb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Friends</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          You are <span className="font-medium text-slate-700">@{myHandle}</span>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Friends</h1>
+        <p className="mt-1 text-sm text-ink-2">
+          You are <span className="font-medium text-ink-2">@{myHandle}</span>
           {myName ? ` · ${myName}` : ""}
         </p>
 
         {error && (
-          <p className="mt-4 rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p>
+          <p className="mt-4 rounded-lg bg-red-500/10 p-2 text-sm text-red-600 dark:text-red-400">{error}</p>
         )}
 
         {/* Add friends */}
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
-          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <section className="mt-6 rounded-2xl border border-line bg-surface p-5">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
             Add a friend
           </h2>
           <form onSubmit={doSearch} className="mt-3 flex gap-2">
@@ -148,21 +148,21 @@ export default function FriendsView({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by @handle"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
             />
             <button
               type="submit"
               disabled={searching || !query.trim()}
-              className={`${btn} shrink-0 bg-indigo-600 text-white hover:bg-indigo-700`}
+              className={`${btn} shrink-0 bg-cta text-cta-ink hover:opacity-90`}
             >
               {searching ? "…" : "Search"}
             </button>
           </form>
 
           {results && (
-            <div className="mt-3 divide-y divide-slate-100">
+            <div className="mt-3 divide-y divide-line">
               {results.length === 0 ? (
-                <p className="py-3 text-sm text-slate-400">No one found.</p>
+                <p className="py-3 text-sm text-ink-3">No one found.</p>
               ) : (
                 results.map((p) => (
                   <PersonRow
@@ -171,14 +171,14 @@ export default function FriendsView({
                     href={`/u/${p.handle}`}
                     right={
                       relatedIds.has(p.id) ? (
-                        <span className="text-xs text-slate-400">Added</span>
+                        <span className="text-xs text-ink-3">Added</span>
                       ) : (
                         <button
                           onClick={(e) => {
                             e.preventDefault();
                             act(() => sendRequest(p.id));
                           }}
-                          className={`${btn} bg-indigo-50 text-indigo-700 hover:bg-indigo-100`}
+                          className={`${btn} bg-accent/15 text-accent hover:bg-accent/25`}
                         >
                           Add
                         </button>
@@ -193,11 +193,11 @@ export default function FriendsView({
 
         {/* Incoming requests */}
         {graph.incoming.length > 0 && (
-          <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
-            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          <section className="mt-4 rounded-2xl border border-line bg-surface p-5">
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
               Requests ({graph.incoming.length})
             </h2>
-            <div className="mt-2 divide-y divide-slate-100">
+            <div className="mt-2 divide-y divide-line">
               {graph.incoming.map(({ friendship, profile }) => (
                 <PersonRow
                   key={friendship.id}
@@ -210,7 +210,7 @@ export default function FriendsView({
                           e.preventDefault();
                           act(() => acceptRequest(friendship.id));
                         }}
-                        className={`${btn} bg-indigo-600 text-white hover:bg-indigo-700`}
+                        className={`${btn} bg-cta text-cta-ink hover:opacity-90`}
                       >
                         Accept
                       </button>
@@ -219,7 +219,7 @@ export default function FriendsView({
                           e.preventDefault();
                           act(() => removeFriendship(friendship.id));
                         }}
-                        className={`${btn} border border-slate-300 text-slate-600 hover:bg-slate-50`}
+                        className={`${btn} border border-line-2 text-ink-2 hover:bg-raised`}
                       >
                         Decline
                       </button>
@@ -232,24 +232,24 @@ export default function FriendsView({
         )}
 
         {/* Friends list */}
-        <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
-          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <section className="mt-4 rounded-2xl border border-line bg-surface p-5">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
             Your friends ({graph.friends.length})
           </h2>
           {loading ? (
-            <p className="py-3 text-sm text-slate-400">Loading…</p>
+            <p className="py-3 text-sm text-ink-3">Loading…</p>
           ) : graph.friends.length === 0 ? (
-            <p className="py-3 text-sm text-slate-500">
+            <p className="py-3 text-sm text-ink-2">
               No friends yet — search for someone by their @handle above.
             </p>
           ) : (
-            <div className="mt-2 divide-y divide-slate-100">
+            <div className="mt-2 divide-y divide-line">
               {graph.friends.map((p) => (
                 <PersonRow
                   key={p.id}
                   profile={p}
                   href={`/u/${p.handle}`}
-                  right={<span className="text-xs text-indigo-600">View →</span>}
+                  right={<span className="text-xs font-medium text-accent">View →</span>}
                 />
               ))}
             </div>
@@ -258,11 +258,11 @@ export default function FriendsView({
 
         {/* Outgoing */}
         {graph.outgoing.length > 0 && (
-          <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
-            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          <section className="mt-4 rounded-2xl border border-line bg-surface p-5">
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
               Pending sent ({graph.outgoing.length})
             </h2>
-            <div className="mt-2 divide-y divide-slate-100">
+            <div className="mt-2 divide-y divide-line">
               {graph.outgoing.map(({ friendship, profile }) => (
                 <PersonRow
                   key={friendship.id}
@@ -270,7 +270,7 @@ export default function FriendsView({
                   right={
                     <button
                       onClick={() => act(() => removeFriendship(friendship.id))}
-                      className={`${btn} border border-slate-300 text-slate-500 hover:bg-slate-50`}
+                      className={`${btn} border border-line-2 text-ink-2 hover:bg-raised`}
                     >
                       Cancel
                     </button>

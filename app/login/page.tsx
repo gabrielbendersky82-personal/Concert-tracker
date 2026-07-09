@@ -11,7 +11,7 @@ type Mode = "password" | "magic";
 type Status = "idle" | "working" | "sent" | "error";
 
 const inputClass =
-  "w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
+  "w-full rounded-lg border border-line-2 bg-surface px-3 py-2 text-ink placeholder:text-ink-3 outline-none focus:border-accent focus:ring-2 focus:ring-accent/25";
 
 export default function LoginPage() {
   const [view, setView] = useState<"choose" | "auth">("choose");
@@ -102,10 +102,10 @@ export default function LoginPage() {
             <div className="mb-3 flex justify-center">
               <BrandMark className="h-16 w-16" rounded="rounded-2xl" />
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            <h1 className="text-3xl font-extrabold tracking-tight text-ink">
               Concert Map
             </h1>
-            <p className="mt-1.5 font-bold text-slate-600">
+            <p className="mt-1.5 font-bold text-ink-2">
               Every concert you&apos;ve ever seen, on one map.
             </p>
           </div>
@@ -113,19 +113,19 @@ export default function LoginPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <Link
               href="/demo"
-              className="group relative flex flex-col items-center overflow-hidden rounded-2xl border border-indigo-200 bg-gradient-to-b from-indigo-50/70 to-white p-8 text-center shadow-sm ring-1 ring-indigo-100 transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+              className="group relative flex flex-col items-center overflow-hidden rounded-2xl border border-line bg-gradient-to-b from-indigo-500/10 to-surface p-8 text-center shadow-sm ring-1 ring-line transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
-              <span className="absolute right-3 top-3 rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+              <span className="absolute right-3 top-3 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent-ink">
                 No account
               </span>
               <DemoArt />
-              <h2 className="mt-4 text-lg font-bold text-slate-900">
+              <h2 className="mt-4 text-lg font-bold text-ink">
                 Explore the live demo
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-ink-2">
                 Jump straight into a sample map, timeline &amp; stats.
               </p>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 group-hover:text-indigo-700">
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-accent group-hover:opacity-80">
                 Open demo
                 <span className="transition-transform group-hover:translate-x-0.5">
                   →
@@ -136,14 +136,14 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setView("auth")}
-              className="group flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+              className="group flex flex-col items-center rounded-2xl border border-line bg-surface p-8 text-center shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
               <SignInArt />
-              <h2 className="mt-4 text-lg font-bold text-slate-900">Sign in</h2>
-              <p className="mt-1 text-sm text-slate-500">
+              <h2 className="mt-4 text-lg font-bold text-ink">Sign in</h2>
+              <p className="mt-1 text-sm text-ink-2">
                 Log in to build and keep your own concert map.
               </p>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-slate-700 group-hover:text-slate-900">
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-ink-2 group-hover:text-ink">
                 Continue
                 <span className="transition-transform group-hover:translate-x-0.5">
                   →
@@ -166,7 +166,7 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={() => setView("choose")}
-          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-700"
+          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-ink-2 hover:text-ink"
         >
           <span aria-hidden>←</span> Back
         </button>
@@ -174,16 +174,16 @@ export default function LoginPage() {
           <div className="mb-3 flex justify-center">
             <BrandMark className="h-12 w-12" rounded="rounded-xl" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">
             Concert Map
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-ink-2">
             Sign in to map every show you&apos;ve seen.
           </p>
         </div>
 
         {magicSent ? (
-          <div className="rounded-lg bg-emerald-50 p-4 text-center text-sm text-emerald-800">
+          <div className="rounded-lg bg-emerald-500/10 p-4 text-center text-sm text-emerald-800 dark:text-emerald-300">
             Check <span className="font-medium">{email}</span> for a magic link
             to sign in.
           </div>
@@ -192,7 +192,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="mb-1 block text-sm font-medium text-slate-700"
+                className="mb-1 block text-sm font-medium text-ink-2"
               >
                 Email
               </label>
@@ -210,7 +210,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="mb-1 block text-sm font-medium text-slate-700"
+                className="mb-1 block text-sm font-medium text-ink-2"
               >
                 Password
               </label>
@@ -229,7 +229,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={status === "working"}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:opacity-60"
+              className="w-full rounded-full bg-cta px-4 py-2 font-semibold text-cta-ink transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent/40 disabled:opacity-60"
             >
               {status === "working"
                 ? "Please wait…"
@@ -239,12 +239,12 @@ export default function LoginPage() {
             </button>
 
             {status === "error" && (
-              <p className="text-sm text-red-600" role="alert">
+              <p className="text-sm text-red-600 dark:text-red-400" role="alert">
                 {message}
               </p>
             )}
             {status === "sent" && (
-              <p className="text-sm text-emerald-700">{message}</p>
+              <p className="text-sm text-emerald-700 dark:text-emerald-400">{message}</p>
             )}
 
             <div className="flex items-center justify-between pt-1 text-sm">
@@ -255,14 +255,14 @@ export default function LoginPage() {
                   setStatus("idle");
                   setMessage("");
                 }}
-                className="font-medium text-indigo-600 hover:text-indigo-700"
+                className="font-medium text-accent hover:opacity-80"
               >
                 {isSignUp ? "Have an account? Sign in" : "Create an account"}
               </button>
               <button
                 type="button"
                 onClick={() => switchMode("magic")}
-                className="text-slate-500 hover:text-slate-700"
+                className="text-ink-2 hover:text-ink"
               >
                 Email me a link
               </button>
@@ -273,7 +273,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="magic-email"
-                className="mb-1 block text-sm font-medium text-slate-700"
+                className="mb-1 block text-sm font-medium text-ink-2"
               >
                 Email
               </label>
@@ -291,12 +291,12 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={status === "working"}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:opacity-60"
+              className="w-full rounded-full bg-cta px-4 py-2 font-semibold text-cta-ink transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent/40 disabled:opacity-60"
             >
               {status === "working" ? "Sending…" : "Send magic link"}
             </button>
             {status === "error" && (
-              <p className="text-sm text-red-600" role="alert">
+              <p className="text-sm text-red-600 dark:text-red-400" role="alert">
                 {message}
               </p>
             )}
@@ -304,7 +304,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => switchMode("password")}
-                className="text-slate-500 hover:text-slate-700"
+                className="text-ink-2 hover:text-ink"
               >
                 Use a password instead
               </button>
@@ -328,7 +328,7 @@ function Backdrop() {
         sizes="100vw"
         className="pointer-events-none select-none object-cover opacity-40"
       />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-50/55 via-slate-50/25 to-slate-50/65" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ground/55 via-ground/25 to-ground/65" />
     </>
   );
 }
@@ -350,7 +350,7 @@ function DemoArt() {
         <path d="M12 21s-6-5.4-6-10a6 6 0 1112 0c0 4.6-6 10-6 10z" />
         <circle cx="12" cy="11" r="2.4" />
       </svg>
-      <span className="absolute -bottom-1.5 -right-1.5 grid h-7 w-7 place-items-center rounded-full bg-white text-pink-600 shadow ring-1 ring-slate-100">
+      <span className="absolute -bottom-1.5 -right-1.5 grid h-7 w-7 place-items-center rounded-full bg-white text-pink-600 shadow ring-1 ring-line">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
           <path d="M8 5v14l11-7z" />
         </svg>
