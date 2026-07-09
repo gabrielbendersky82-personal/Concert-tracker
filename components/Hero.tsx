@@ -10,7 +10,7 @@ export default function Hero({
   count: number;
 }) {
   return (
-    <section className="relative flex min-h-dvh flex-col overflow-hidden text-white">
+    <section className="hero-dissolve relative flex min-h-dvh flex-col overflow-hidden text-white">
       {/* Background photo */}
       <Image
         src="/hero.jpg"

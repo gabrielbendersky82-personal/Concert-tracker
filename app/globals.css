@@ -34,3 +34,28 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/*
+ * Scroll-driven dissolve of the landing hero into the map. As the page scrolls
+ * through the first viewport, the hero fades, drifts up, scales and softens so
+ * it melts into the app below instead of hitting a hard seam. Runs off the main
+ * thread; a pure progressive enhancement — where scroll-driven animations aren't
+ * supported (or motion is reduced) the static gradient dissolve is used instead.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll()) {
+    .hero-dissolve {
+      animation: hero-dissolve linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 90vh;
+      will-change: opacity, transform;
+    }
+    @keyframes hero-dissolve {
+      to {
+        opacity: 0;
+        transform: translateY(-3vh) scale(1.05);
+        filter: blur(5px);
+      }
+    }
+  }
+}
