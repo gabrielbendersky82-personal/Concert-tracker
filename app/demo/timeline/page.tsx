@@ -13,6 +13,7 @@ export default function DemoTimelinePage() {
       handle={DEMO_HANDLE}
       guest
       attendees={DEMO_PEOPLE}
+      myId="you"
     />
   );
 }

@@ -17,6 +17,7 @@ export default function DemoPage() {
       readOnly
       initialShows={DEMO_SHOWS}
       attendees={DEMO_PEOPLE}
+      myId="you"
     />
   );
 }

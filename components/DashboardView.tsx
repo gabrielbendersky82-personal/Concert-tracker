@@ -1,7 +1,13 @@
+"use client";
+
 import Link from "next/link";
-import type { DashboardData } from "@/lib/stats";
+import { useMemo, useState } from "react";
+import { computeDashboard } from "@/lib/stats";
+import type { Show } from "@/lib/types";
+import type { Attendee } from "@/lib/demoShows";
 import AppNav from "./AppNav";
 import GuestBar from "./GuestBar";
+import FriendsToggle from "./FriendsToggle";
 import {
   AreaLine,
   Card,
@@ -12,20 +18,44 @@ import {
 } from "./dashboard/charts";
 
 export default function DashboardView({
-  data,
+  shows,
   handle,
   guest = false,
-  attendeeBreakdown,
+  attendees,
+  myId,
 }: {
-  data: DashboardData;
+  shows: Show[];
   handle: string;
   guest?: boolean;
-  /** Demo only: per-person show counts to show a "Who went" card. */
-  attendeeBreakdown?: { label: string; color: string; count: number }[];
+  /** Attendees (You + friends) — enables the "Who went" card + toggle. */
+  attendees?: Attendee[];
+  myId?: string;
 }) {
+  const [showFriends, setShowFriends] = useState(true);
+  const hasFriends = !!attendees && attendees.length > 1;
+  const colorActive = hasFriends && showFriends;
+
+  const visible = useMemo(
+    () =>
+      !showFriends && myId ? shows.filter((s) => s.user_id === myId) : shows,
+    [shows, showFriends, myId]
+  );
+  const data = useMemo(() => computeDashboard(visible), [visible]);
+  const breakdown = useMemo(() => {
+    if (!colorActive || !attendees) return null;
+    return attendees
+      .map((a) => ({
+        label: a.label,
+        color: a.color,
+        count: visible.filter((s) => s.user_id === a.id).length,
+      }))
+      .filter((b) => b.count > 0)
+      .sort((a, b) => b.count - a.count);
+  }, [colorActive, attendees, visible]);
+
   const empty = data.totalShows === 0;
-  const breakdownMax = attendeeBreakdown
-    ? Math.max(1, ...attendeeBreakdown.map((a) => a.count))
+  const breakdownMax = breakdown
+    ? Math.max(1, ...breakdown.map((a) => a.count))
     : 1;
 
   return (
@@ -41,15 +71,20 @@ export default function DashboardView({
       )}
       <div className="mx-auto max-w-6xl px-4 py-8 pb-24 sm:px-6 md:pb-8">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-            Your Concert Dashboard
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {empty
-              ? "No shows logged yet."
-              : `${data.totalShows} show${data.totalShows === 1 ? "" : "s"} · ${data.uniqueArtists} artist${data.uniqueArtists === 1 ? "" : "s"} · ${data.uniqueCountries} countr${data.uniqueCountries === 1 ? "y" : "ies"}`}
-          </p>
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              Your Concert Dashboard
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {empty
+                ? "No shows logged yet."
+                : `${data.totalShows} show${data.totalShows === 1 ? "" : "s"} · ${data.uniqueArtists} artist${data.uniqueArtists === 1 ? "" : "s"} · ${data.uniqueCountries} countr${data.uniqueCountries === 1 ? "y" : "ies"}`}
+            </p>
+          </div>
+          {hasFriends && (
+            <FriendsToggle value={showFriends} onChange={setShowFriends} />
+          )}
         </div>
 
         {empty ? (
@@ -88,14 +123,14 @@ export default function DashboardView({
 
             {/* Charts */}
             <div className="grid gap-4 md:grid-cols-2">
-              {attendeeBreakdown && attendeeBreakdown.length > 0 && (
+              {breakdown && breakdown.length > 0 && (
                 <Card
                   title="Who went"
                   subtitle="Shows per person"
                   className="md:col-span-2"
                 >
                   <ul className="space-y-2.5">
-                    {attendeeBreakdown.map((a) => (
+                    {breakdown.map((a) => (
                       <li key={a.label} className="flex items-center gap-3">
                         <span className="flex w-16 shrink-0 items-center gap-1.5 text-sm font-medium text-slate-700">
                           <span

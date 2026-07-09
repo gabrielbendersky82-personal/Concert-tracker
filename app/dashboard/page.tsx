@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { computeDashboard } from "@/lib/stats";
-import type { Show } from "@/lib/types";
+import { loadMineAndFriends } from "@/lib/social";
 import DashboardView from "@/components/DashboardView";
 
 export default async function DashboardPage() {
@@ -21,14 +20,14 @@ export default async function DashboardPage() {
     .maybeSingle();
   if (!profile) redirect("/welcome");
 
-  const { data } = await supabase
-    .from("shows")
-    .select("*, setlist_songs(*)")
-    .eq("user_id", user.id)
-    .order("show_date", { ascending: true });
+  const { shows, attendees, myId } = await loadMineAndFriends(supabase);
 
-  const shows = (data ?? []) as Show[];
-  const dashboard = computeDashboard(shows);
-
-  return <DashboardView data={dashboard} handle={profile.handle} />;
+  return (
+    <DashboardView
+      shows={shows}
+      handle={profile.handle}
+      attendees={attendees}
+      myId={myId ?? undefined}
+    />
+  );
 }

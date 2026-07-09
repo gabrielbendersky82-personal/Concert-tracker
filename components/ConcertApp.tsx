@@ -3,10 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { bulkCreateShows, deleteShow, fetchShows } from "@/lib/shows";
+import { bulkCreateShows, deleteShow } from "@/lib/shows";
 import { addShowVideo, deleteShowMedia, uploadShowPhoto } from "@/lib/media";
+import { loadMineAndFriends } from "@/lib/social";
+import { createClient } from "@/lib/supabase/client";
 import { SAMPLE_SHOWS } from "@/lib/sampleShows";
 import type { Show, ShowMedia } from "@/lib/types";
+import type { Attendee } from "@/lib/demoShows";
+import FriendsToggle from "./FriendsToggle";
 import AddShowForm from "./AddShowForm";
 import StatsPanel from "./StatsPanel";
 import ShowDetail from "./ShowDetail";
@@ -42,30 +46,21 @@ export default function ConcertApp({
   handle,
   readOnly = false,
   initialShows,
-  attendees,
+  attendees: initialAttendees,
+  myId: initialMyId,
 }: {
   handle: string;
   readOnly?: boolean;
   initialShows?: Show[];
-  /** When set, pins/list are colored by attendee (show.user_id → persona). */
-  attendees?: { id: string; label: string; color: string }[];
+  /** Attendees (You + friends) used to color shows by whose they are. */
+  attendees?: Attendee[];
+  /** The current user's id (so "just me" can filter). */
+  myId?: string;
 }) {
-  // Derive the coloring helpers from the (serializable) attendee list.
-  const attendeeMap = useMemo(
-    () => new Map((attendees ?? []).map((a) => [a.id, a])),
-    [attendees]
-  );
-  const mapColorOf = attendees
-    ? (show: Show) => attendeeMap.get(show.user_id)?.color ?? "#e11d48"
-    : undefined;
-  const mapLegend = attendees?.map((a) => ({ label: a.label, color: a.color }));
-  const attendeeOf = attendees
-    ? (show: Show) => {
-        const a = attendeeMap.get(show.user_id);
-        return a ? { label: a.label, color: a.color } : null;
-      }
-    : undefined;
   const [shows, setShows] = useState<Show[]>(initialShows ?? []);
+  const [attendees, setAttendees] = useState<Attendee[]>(initialAttendees ?? []);
+  const [myId, setMyId] = useState<string | null>(initialMyId ?? null);
+  const [showFriends, setShowFriends] = useState(true);
   const [loading, setLoading] = useState(!readOnly);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<Tab>(readOnly ? "shows" : "add");
@@ -77,10 +72,36 @@ export default function ConcertApp({
     ? TABS.filter((t) => t.id === "shows" || t.id === "stats")
     : TABS;
 
+  const hasFriends = attendees.length > 1;
+  // Show only my shows when the toggle is off; otherwise everyone's.
+  const visibleShows =
+    !showFriends && myId ? shows.filter((s) => s.user_id === myId) : shows;
+
+  // Color pins/list/legend by attendee, but only while showing friends.
+  const attendeeMap = useMemo(
+    () => new Map(attendees.map((a) => [a.id, a])),
+    [attendees]
+  );
+  const colorActive = hasFriends && showFriends;
+  const mapColorOf = colorActive
+    ? (show: Show) => attendeeMap.get(show.user_id)?.color ?? "#e11d48"
+    : undefined;
+  const mapLegend = colorActive
+    ? attendees.map((a) => ({ label: a.label, color: a.color }))
+    : undefined;
+  const attendeeOf = colorActive
+    ? (show: Show) => {
+        const a = attendeeMap.get(show.user_id);
+        return a ? { label: a.label, color: a.color } : null;
+      }
+    : undefined;
+
   const load = useCallback(async () => {
     try {
-      const data = await fetchShows();
-      setShows(data);
+      const data = await loadMineAndFriends(createClient());
+      setShows(data.shows);
+      setAttendees(data.attendees);
+      setMyId(data.myId);
       setError("");
     } catch (err) {
       setError(
@@ -106,6 +127,11 @@ export default function ConcertApp({
     () => shows.find((s) => s.id === selectedId) ?? null,
     [shows, selectedId]
   );
+  // Only my own shows are editable (deleting/adding media to a friend's show
+  // would fail RLS). Backups also export just my shows.
+  const canEditSelected =
+    !readOnly && !!selectedShow && (!myId || selectedShow.user_id === myId);
+  const myShows = myId ? shows.filter((s) => s.user_id === myId) : shows;
 
   const handleSelect = useCallback((id: string) => {
     setSelectedId(id);
@@ -160,7 +186,7 @@ export default function ConcertApp({
       {/* Map */}
       <div className="relative min-h-0 flex-1">
         <MapView
-          shows={shows}
+          shows={visibleShows}
           selectedId={selectedId}
           onSelect={handleSelect}
           colorOf={mapColorOf}
@@ -176,7 +202,7 @@ export default function ConcertApp({
           }}
         />
 
-        {!loading && shows.length === 0 && (
+        {!loading && visibleShows.length === 0 && (
           <div className="pointer-events-none absolute inset-0 z-[500] flex items-center justify-center p-6">
             <div className="pointer-events-auto max-w-xs rounded-2xl bg-white/95 p-5 text-center shadow-lg backdrop-blur">
               <div className="mb-1 text-2xl" aria-hidden>
@@ -243,7 +269,7 @@ export default function ConcertApp({
                 Concert Map
               </h1>
               <p className="truncate text-xs leading-tight text-slate-400">
-                {shows.length} show{shows.length === 1 ? "" : "s"} ·{" "}
+                {visibleShows.length} show{visibleShows.length === 1 ? "" : "s"} ·{" "}
                 {readOnly ? "Live demo" : `@${handle}`}
               </p>
             </div>
@@ -288,15 +314,24 @@ export default function ConcertApp({
           </div>
         </div>
 
+        {hasFriends && (
+          <div className="flex items-center justify-between gap-2 border-t border-slate-100 px-4 py-2">
+            <span className="text-xs text-slate-500">
+              {showFriends ? "You + friends" : "Just your shows"}
+            </span>
+            <FriendsToggle value={showFriends} onChange={setShowFriends} />
+          </div>
+        )}
+
         {selectedShow ? (
           <div className="min-h-0 flex-1 overflow-y-auto border-t border-slate-100 p-4">
             <ShowDetail
               show={selectedShow}
               onClose={() => setSelectedId(null)}
-              onDelete={readOnly ? undefined : handleDelete}
-              onAddPhotos={readOnly ? undefined : handleAddPhotos}
-              onAddVideo={readOnly ? undefined : handleAddVideo}
-              onDeleteMedia={readOnly ? undefined : handleDeleteMedia}
+              onDelete={canEditSelected ? handleDelete : undefined}
+              onAddPhotos={canEditSelected ? handleAddPhotos : undefined}
+              onAddVideo={canEditSelected ? handleAddVideo : undefined}
+              onDeleteMedia={canEditSelected ? handleDeleteMedia : undefined}
             />
           </div>
         ) : (
@@ -332,14 +367,14 @@ export default function ConcertApp({
 
               {tab === "shows" && (
                 <ShowsList
-                  shows={shows}
+                  shows={visibleShows}
                   loading={loading}
                   onSelect={handleSelect}
                   attendeeOf={attendeeOf}
                 />
               )}
 
-              {tab === "stats" && <StatsPanel shows={shows} />}
+              {tab === "stats" && <StatsPanel shows={visibleShows} />}
 
               {tab === "data" && (
                 <div className="space-y-4">
@@ -347,7 +382,7 @@ export default function ConcertApp({
                     <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
                       Backup
                     </h3>
-                    <ImportExport shows={shows} onImported={load} />
+                    <ImportExport shows={myShows} onImported={load} />
                   </div>
                   <div>
                     <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { loadMineAndFriends } from "@/lib/social";
 import TimelineView from "@/components/TimelineView";
-import type { Show } from "@/lib/types";
 
 export default async function TimelinePage() {
   const supabase = await createClient();
@@ -17,25 +17,14 @@ export default async function TimelinePage() {
     .maybeSingle();
   if (!profile) redirect("/welcome");
 
-  const cols = "id, artist, venue, city, country, show_date";
-  // Include photos for the card thumbnails; fall back if show_media isn't
-  // present yet (migration 0004 not applied).
-  const withMedia = await supabase
-    .from("shows")
-    .select(`${cols}, show_media(*)`)
-    .eq("user_id", user.id)
-    .order("show_date", { ascending: true });
-  const rows = withMedia.error
-    ? (
-        await supabase
-          .from("shows")
-          .select(cols)
-          .eq("user_id", user.id)
-          .order("show_date", { ascending: true })
-      ).data
-    : withMedia.data;
+  const { shows, attendees, myId } = await loadMineAndFriends(supabase);
 
   return (
-    <TimelineView shows={(rows ?? []) as Show[]} handle={profile.handle} />
+    <TimelineView
+      shows={shows}
+      handle={profile.handle}
+      attendees={attendees}
+      myId={myId ?? undefined}
+    />
   );
 }

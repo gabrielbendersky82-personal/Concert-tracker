@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import AppNav from "./AppNav";
 import GuestBar from "./GuestBar";
+import FriendsToggle from "./FriendsToggle";
 import { firstPhotoSrc } from "@/lib/media";
 import type { Show } from "@/lib/types";
 
@@ -144,22 +145,31 @@ export default function TimelineView({
   handle,
   guest = false,
   attendees,
+  myId,
 }: {
   shows: Show[];
   handle: string;
   guest?: boolean;
   /** When set, nodes/cards are colored by attendee (show.user_id → persona). */
   attendees?: { id: string; label: string; color: string }[];
+  /** The current user's id (so "just me" can filter). */
+  myId?: string;
 }) {
   const captureRef = useRef<HTMLDivElement>(null);
-  const attendeeColor = attendees
-    ? (show: Show) =>
-        attendees.find((a) => a.id === show.user_id)?.color ?? null
-    : () => null;
   const [capturing, setCapturing] = useState(false);
   const [busy, setBusy] = useState<"" | "export" | "share">("");
+  const [showFriends, setShowFriends] = useState(true);
 
-  const ordered = [...shows].sort((a, b) =>
+  const hasFriends = !!attendees && attendees.length > 1;
+  const colorActive = hasFriends && showFriends;
+  const attendeeColor = colorActive
+    ? (show: Show) =>
+        attendees!.find((a) => a.id === show.user_id)?.color ?? null
+    : () => null;
+
+  const visibleShows =
+    !showFriends && myId ? shows.filter((s) => s.user_id === myId) : shows;
+  const ordered = [...visibleShows].sort((a, b) =>
     a.show_date.localeCompare(b.show_date)
   );
 
@@ -193,7 +203,7 @@ export default function TimelineView({
     );
     root.querySelectorAll(".tl-reveal").forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [shows.length]);
+  }, [ordered.length, showFriends]);
 
   async function makePng(): Promise<string | null> {
     const node = captureRef.current;
@@ -290,9 +300,9 @@ export default function TimelineView({
                 ? `${ordered.length} show${ordered.length === 1 ? "" : "s"} · ${yearsLabel}`
                 : "No shows yet."}
             </p>
-            {attendees && attendees.length > 0 && ordered.length > 0 && (
+            {colorActive && ordered.length > 0 && (
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                {attendees.map((a) => (
+                {attendees!.map((a) => (
                   <span
                     key={a.id}
                     className="flex items-center gap-1.5 text-xs font-medium text-slate-600"
@@ -307,24 +317,29 @@ export default function TimelineView({
               </div>
             )}
           </div>
-          {ordered.length > 0 && (
-            <div className="flex gap-2">
-              <button
-                onClick={handleExport}
-                disabled={!!busy}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-              >
-                {busy === "export" ? "Rendering…" : "Export image"}
-              </button>
-              <button
-                onClick={handleShare}
-                disabled={!!busy}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {busy === "share" ? "Rendering…" : "Share"}
-              </button>
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {hasFriends && (
+              <FriendsToggle value={showFriends} onChange={setShowFriends} />
+            )}
+            {ordered.length > 0 && (
+              <>
+                <button
+                  onClick={handleExport}
+                  disabled={!!busy}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                >
+                  {busy === "export" ? "Rendering…" : "Export image"}
+                </button>
+                <button
+                  onClick={handleShare}
+                  disabled={!!busy}
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {busy === "share" ? "Rendering…" : "Share"}
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {ordered.length === 0 ? (
