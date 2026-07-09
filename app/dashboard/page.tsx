@@ -24,6 +24,7 @@ export default async function DashboardPage() {
   const { data } = await supabase
     .from("shows")
     .select("*, setlist_songs(*)")
+    .eq("user_id", user.id)
     .order("show_date", { ascending: true });
 
   const shows = (data ?? []) as Show[];

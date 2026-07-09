@@ -25,7 +25,8 @@ export default async function Home() {
 
   const { count } = await supabase
     .from("shows")
-    .select("id", { count: "exact", head: true });
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
 
   return (
     <main className="flex flex-col bg-[#eef1f6]">

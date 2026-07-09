@@ -23,12 +23,14 @@ export default async function TimelinePage() {
   const withMedia = await supabase
     .from("shows")
     .select(`${cols}, show_media(*)`)
+    .eq("user_id", user.id)
     .order("show_date", { ascending: true });
   const rows = withMedia.error
     ? (
         await supabase
           .from("shows")
           .select(cols)
+          .eq("user_id", user.id)
           .order("show_date", { ascending: true })
       ).data
     : withMedia.data;

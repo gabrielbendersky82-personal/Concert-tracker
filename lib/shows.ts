@@ -21,11 +21,21 @@ async function selectShows(
   return rows.map(sortShowRelations) as Show[];
 }
 
-/** Fetch the signed-in user's shows with setlists (RLS scopes to the owner). */
+/** Fetch the signed-in user's OWN shows with setlists. */
 export async function fetchShows(): Promise<Show[]> {
   const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+  // Filter by owner explicitly: RLS also permits reading friends' and public
+  // profiles' shows, so relying on RLS alone would merge in others' concerts.
   return selectShows((select) =>
-    supabase.from("shows").select(select).order("show_date", { ascending: false })
+    supabase
+      .from("shows")
+      .select(select)
+      .eq("user_id", user.id)
+      .order("show_date", { ascending: false })
   );
 }
 
