@@ -22,7 +22,7 @@ import { AccountMenu, BottomTabs, NavIcon, SECTIONS } from "./AppNav";
 const MapView = dynamic(() => import("./MapView"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full w-full items-center justify-center bg-slate-100 text-sm text-slate-400">
+    <div className="flex h-full w-full items-center justify-center bg-raised text-sm text-ink-3">
       Loading map…
     </div>
   ),

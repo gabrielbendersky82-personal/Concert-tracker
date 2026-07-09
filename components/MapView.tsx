@@ -5,7 +5,15 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { firstPhotoSrc } from "@/lib/media";
+import { useTheme } from "@/lib/theme";
 import type { Show } from "@/lib/types";
+
+// CARTO basemaps per theme: voyager for light, dark_all for dark so the
+// colored pins glow against the near-black tiles.
+const TILE_URL = {
+  light: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+  dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+} as const;
 
 // Custom SVG pin so we don't depend on Leaflet's bundled marker images.
 // `color` sets the fill (e.g. per-attendee); the selected pin is enlarged with a
@@ -77,6 +85,7 @@ export default function MapView({
   legend?: { label: string; color: string }[];
 }) {
   const mappable = shows.filter(hasCoords);
+  const theme = useTheme();
 
   return (
     <div className="relative h-full w-full">
@@ -86,12 +95,14 @@ export default function MapView({
         minZoom={2}
         worldCopyJump
         className="h-full w-full"
-        style={{ background: "#e5e7eb" }}
+        style={{ background: "var(--raised)" }}
       >
+        {/* key forces a remount on theme change — react-leaflet ignores url updates */}
         <TileLayer
+          key={theme}
           maxZoom={19}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          url={TILE_URL[theme]}
         />
         <FitBounds shows={mappable} />
         <FlyToSelected shows={mappable} selectedId={selectedId} />
@@ -112,12 +123,12 @@ export default function MapView({
                   className="mb-1.5 h-24 w-full rounded-md object-cover"
                 />
               )}
-              <div className="font-semibold text-slate-900">{show.artist}</div>
-              {show.venue && <div className="text-slate-600">{show.venue}</div>}
-              <div className="text-slate-500">
+              <div className="font-semibold text-ink">{show.artist}</div>
+              {show.venue && <div className="text-ink-2">{show.venue}</div>}
+              <div className="text-ink-2">
                 {[show.city, show.country].filter(Boolean).join(", ")}
               </div>
-              <div className="mt-1 text-xs text-slate-400">
+              <div className="mt-1 text-xs text-ink-3">
                 {show.show_date}
               </div>
             </div>
@@ -127,13 +138,13 @@ export default function MapView({
       </MapContainer>
 
       {legend && legend.length > 0 && (
-        <div className="pointer-events-auto absolute bottom-3 left-3 z-[600] rounded-xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg backdrop-blur">
-          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+        <div className="pointer-events-auto absolute bottom-3 left-3 z-[600] rounded-xl border border-line bg-surface/95 px-3 py-2 shadow-lg backdrop-blur">
+          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-3">
             Who went
           </div>
           <ul className="space-y-1">
             {legend.map((item) => (
-              <li key={item.label} className="flex items-center gap-2 text-xs text-slate-700">
+              <li key={item.label} className="flex items-center gap-2 text-xs text-ink-2">
                 <span
                   className="h-2.5 w-2.5 shrink-0 rounded-full"
                   style={{ background: item.color }}
