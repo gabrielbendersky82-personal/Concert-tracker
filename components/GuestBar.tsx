@@ -28,11 +28,11 @@ export default function GuestBar({
 }) {
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5 sm:px-6">
           <Link href={showSections ? "/demo" : "/"} className="flex items-center gap-2">
             <BrandMark className="h-8 w-8" />
-            <span className="hidden text-sm font-semibold tracking-tight text-slate-900 sm:inline">
+            <span className="hidden text-sm font-bold tracking-tight text-ink sm:inline">
               Concert Map
             </span>
           </Link>
@@ -45,10 +45,10 @@ export default function GuestBar({
                   <Link
                     key={s.id}
                     href={s.href}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                    className={`flex items-center gap-1.5 border-b-2 px-3 py-1.5 text-sm transition ${
                       on
-                        ? "bg-indigo-50 text-indigo-700"
-                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                        ? "border-accent font-semibold text-ink"
+                        : "border-transparent font-medium text-ink-2 hover:text-ink"
                     }`}
                   >
                     <NavIcon id={s.id} className="h-4 w-4" />
@@ -71,14 +71,14 @@ export default function GuestBar({
         </div>
 
         {notice && (
-          <div className="border-t border-indigo-100 bg-indigo-50/70 px-4 py-1.5 text-center text-xs text-indigo-700 sm:px-6">
+          <div className="border-t border-accent/20 bg-accent/10 px-4 py-1.5 text-center text-xs font-medium text-accent sm:px-6">
             {notice}
           </div>
         )}
       </header>
 
       {showSections && (
-        <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-slate-200 bg-white/95 backdrop-blur md:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-surface/95 backdrop-blur md:hidden">
           {DEMO_SECTIONS.map((s) => {
             const on = s.id === active;
             return (
@@ -86,7 +86,7 @@ export default function GuestBar({
                 key={s.id}
                 href={s.href}
                 className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${
-                  on ? "text-indigo-600" : "text-slate-400 hover:text-slate-600"
+                  on ? "text-accent" : "text-ink-3 hover:text-ink-2"
                 }`}
               >
                 <NavIcon id={s.id} className="h-5 w-5" />

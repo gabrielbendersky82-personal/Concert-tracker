@@ -78,28 +78,28 @@ export function AccountMenu({ handle }: { handle: string }) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-full border border-slate-200 py-1 pl-1 pr-2.5 transition hover:bg-slate-50"
+        className="flex items-center gap-2 rounded-full border border-line py-1 pl-1 pr-2.5 transition hover:bg-raised"
       >
-        <span className="grid h-7 w-7 place-items-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
+        <span className="grid h-7 w-7 place-items-center rounded-full bg-indigo-500/15 text-xs font-bold text-indigo-600 dark:text-indigo-300">
           {handle.charAt(0).toUpperCase()}
         </span>
-        <span className="hidden text-sm font-medium text-slate-700 sm:inline">
+        <span className="hidden text-sm font-medium text-ink-2 sm:inline">
           @{handle}
         </span>
       </button>
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
-          <div className="px-3 py-2 text-xs text-slate-400">@{handle}</div>
+        <div className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-lg">
+          <div className="px-3 py-2 text-xs text-ink-3">@{handle}</div>
           <Link
             href={`/u/${handle}`}
-            className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            className="block px-3 py-2 text-sm text-ink-2 hover:bg-raised"
             onClick={() => setOpen(false)}
           >
             Your profile
           </Link>
           <button
             onClick={signOut}
-            className="block w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+            className="block w-full px-3 py-2 text-left text-sm text-ink-2 hover:bg-raised"
           >
             Sign out
           </button>
@@ -120,7 +120,7 @@ export function BottomTabs({
     <nav
       className={`${
         position === "fixed" ? "fixed" : "absolute"
-      } inset-x-0 bottom-0 z-40 flex border-t border-slate-200 bg-white/95 backdrop-blur md:hidden`}
+      } inset-x-0 bottom-0 z-40 flex border-t border-line bg-surface/95 backdrop-blur md:hidden`}
     >
       {SECTIONS.map((s) => {
         const on = s.id === active;
@@ -129,7 +129,7 @@ export function BottomTabs({
             key={s.id}
             href={s.href}
             className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${
-              on ? "text-indigo-600" : "text-slate-400 hover:text-slate-600"
+              on ? "text-accent" : "text-ink-3 hover:text-ink-2"
             }`}
           >
             <NavIcon id={s.id} className="h-5 w-5" />
@@ -150,11 +150,11 @@ export default function AppNav({
 }) {
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5 sm:px-6">
           <Link href="/" className="flex items-center gap-2">
             <BrandMark className="h-8 w-8" />
-            <span className="hidden text-sm font-semibold tracking-tight text-slate-900 sm:inline">
+            <span className="hidden text-sm font-bold tracking-tight text-ink sm:inline">
               Concert Map
             </span>
           </Link>
@@ -166,10 +166,10 @@ export default function AppNav({
                 <Link
                   key={s.id}
                   href={s.href}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                  className={`flex items-center gap-1.5 border-b-2 px-3 py-1.5 text-sm transition ${
                     on
-                      ? "bg-indigo-50 text-indigo-700"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                      ? "border-accent font-semibold text-ink"
+                      : "border-transparent font-medium text-ink-2 hover:text-ink"
                   }`}
                 >
                   <NavIcon id={s.id} className="h-4 w-4" />

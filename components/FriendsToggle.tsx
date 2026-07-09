@@ -19,18 +19,18 @@ export default function FriendsToggle({
       onClick={() => onChange(!value)}
       className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition ${
         value
-          ? "border-indigo-200 bg-indigo-50 text-indigo-700"
-          : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+          ? "border-accent/40 bg-accent/10 text-ink"
+          : "border-line-2 bg-surface text-ink-2 hover:bg-raised"
       }`}
     >
       <span
         className={`relative h-4 w-7 shrink-0 rounded-full transition ${
-          value ? "bg-indigo-600" : "bg-slate-300"
+          value ? "bg-accent" : "bg-line-2"
         }`}
       >
         <span
-          className={`absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-all ${
-            value ? "left-3.5" : "left-0.5"
+          className={`absolute top-0.5 h-3 w-3 rounded-full shadow transition-all ${
+            value ? "left-3.5 bg-accent-ink" : "left-0.5 bg-surface"
           }`}
         />
       </span>

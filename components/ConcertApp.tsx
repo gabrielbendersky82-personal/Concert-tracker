@@ -209,20 +209,20 @@ export default function ConcertApp({
 
         {!loading && visibleShows.length === 0 && (
           <div className="pointer-events-none absolute inset-0 z-[500] flex items-center justify-center p-6">
-            <div className="pointer-events-auto max-w-xs rounded-2xl bg-white/95 p-5 text-center shadow-lg backdrop-blur">
+            <div className="pointer-events-auto max-w-xs rounded-2xl border border-line bg-surface/95 p-5 text-center shadow-lg backdrop-blur">
               <div className="mb-1 text-2xl" aria-hidden>
                 🎶
               </div>
-              <p className="text-sm font-medium text-slate-800">
+              <p className="text-sm font-medium text-ink">
                 Your map is empty
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-ink-2">
                 Add a show, or drop in a few samples to see how it looks.
               </p>
               <button
                 onClick={handleSeed}
                 disabled={seeding}
-                className="mt-3 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+                className="mt-3 rounded-full bg-cta px-3.5 py-1.5 text-xs font-semibold text-cta-ink transition hover:opacity-90 disabled:opacity-60"
               >
                 {seeding ? "Adding…" : "Load sample shows"}
               </button>
@@ -233,7 +233,7 @@ export default function ConcertApp({
 
       {/* Mobile bottom tab bar (sits below the sheet) */}
       {readOnly ? (
-        <nav className="absolute inset-x-0 bottom-0 z-40 flex border-t border-slate-200 bg-white/95 backdrop-blur md:hidden">
+        <nav className="absolute inset-x-0 bottom-0 z-40 flex border-t border-line bg-surface/95 backdrop-blur md:hidden">
           {DEMO_NAV.map((s) => {
             const on = s.id === "map";
             return (
@@ -241,7 +241,7 @@ export default function ConcertApp({
                 key={s.id}
                 href={s.href}
                 className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium capitalize transition ${
-                  on ? "text-indigo-600" : "text-slate-400 hover:text-slate-600"
+                  on ? "text-accent" : "text-ink-3 hover:text-ink-2"
                 }`}
               >
                 <NavIcon id={s.id} className="h-5 w-5" />
@@ -256,7 +256,7 @@ export default function ConcertApp({
 
       {/* Sidebar / bottom sheet */}
       <aside
-        className={`absolute inset-x-0 bottom-14 z-[1000] flex max-h-[78vh] flex-col rounded-t-2xl bg-white shadow-2xl transition-transform duration-300 md:static md:bottom-0 md:h-full md:max-h-none md:w-[420px] md:translate-y-0 md:rounded-none md:border-l md:border-slate-200 md:shadow-none ${
+        className={`absolute inset-x-0 bottom-14 z-[1000] flex max-h-[78vh] flex-col rounded-t-2xl bg-surface shadow-2xl transition-transform duration-300 md:static md:bottom-0 md:h-full md:max-h-none md:w-[420px] md:translate-y-0 md:rounded-none md:border-l md:border-line md:shadow-none ${
           sheetOpen ? "translate-y-0" : "translate-y-[calc(100%-3.75rem)]"
         } md:translate-y-0`}
       >
@@ -268,10 +268,10 @@ export default function ConcertApp({
           >
             <BrandMark className="h-7 w-7" />
             <div className="min-w-0">
-              <h1 className="whitespace-nowrap text-base font-semibold leading-tight text-slate-900">
+              <h1 className="whitespace-nowrap text-base font-extrabold leading-tight tracking-tight text-ink">
                 Concert Map
               </h1>
-              <p className="truncate text-xs leading-tight text-slate-400">
+              <p className="truncate text-xs leading-tight text-ink-3">
                 {visibleShows.length} show{visibleShows.length === 1 ? "" : "s"} ·{" "}
                 {readOnly ? "Live demo" : `@${handle}`}
               </p>
@@ -291,7 +291,7 @@ export default function ConcertApp({
             )}
             <button
               onClick={() => setSheetOpen((o) => !o)}
-              className="px-1 text-slate-400 md:hidden"
+              className="px-1 text-ink-3 md:hidden"
               aria-label="Toggle panel"
             >
               {sheetOpen ? "▾" : "▴"}
@@ -300,17 +300,17 @@ export default function ConcertApp({
         </div>
 
         {/* Section nav — labeled links matching the top bar on the other pages */}
-        <nav className="hidden items-center gap-1 border-t border-slate-100 px-3 py-2 md:flex">
+        <nav className="hidden items-center gap-1 border-t border-line px-3 py-2 md:flex">
           {(readOnly ? DEMO_NAV : SECTIONS).map((s) => {
             const on = s.id === "map";
             return (
               <Link
                 key={s.id}
                 href={s.href}
-                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition ${
+                className={`flex items-center gap-1.5 border-b-2 px-2.5 py-1.5 text-sm transition ${
                   on
-                    ? "bg-indigo-50 text-indigo-700"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                    ? "border-accent font-semibold text-ink"
+                    : "border-transparent font-medium text-ink-2 hover:text-ink"
                 }`}
               >
                 <NavIcon id={s.id} className="h-4 w-4" />
@@ -321,8 +321,8 @@ export default function ConcertApp({
         </nav>
 
         {hasFriends && (
-          <div className="flex items-center justify-between gap-2 border-t border-slate-100 px-4 py-2">
-            <span className="text-xs text-slate-500">
+          <div className="flex items-center justify-between gap-2 border-t border-line px-4 py-2">
+            <span className="text-xs text-ink-2">
               {showFriends ? "You + friends" : "Just your shows"}
             </span>
             <FriendsToggle value={showFriends} onChange={setShowFriends} />
@@ -330,7 +330,7 @@ export default function ConcertApp({
         )}
 
         {selectedShow ? (
-          <div className="min-h-0 flex-1 overflow-y-auto border-t border-slate-100 p-4">
+          <div className="min-h-0 flex-1 overflow-y-auto border-t border-line p-4">
             <ShowDetail
               show={selectedShow}
               onClose={() => setSelectedId(null)}
@@ -343,7 +343,7 @@ export default function ConcertApp({
         ) : (
           <>
             {/* Tabs */}
-            <div className="flex gap-1 border-t border-slate-100 px-3 py-2">
+            <div className="flex gap-1 border-t border-line px-3 py-2">
               {visibleTabs.map((t) => (
                 <button
                   key={t.id}
@@ -351,10 +351,10 @@ export default function ConcertApp({
                     setTab(t.id);
                     setSheetOpen(true);
                   }}
-                  className={`flex-1 rounded-lg px-2 py-1.5 text-sm font-medium transition ${
+                  className={`flex-1 border-b-2 px-2 py-1.5 text-sm transition ${
                     tab === t.id
-                      ? "bg-indigo-50 text-indigo-700"
-                      : "text-slate-500 hover:bg-slate-50"
+                      ? "border-accent font-semibold text-ink"
+                      : "border-transparent font-medium text-ink-2 hover:text-ink"
                   }`}
                 >
                   {t.label}
@@ -364,7 +364,7 @@ export default function ConcertApp({
 
             <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-5 pt-1">
               {error && (
-                <p className="mb-3 rounded-lg bg-red-50 p-2 text-xs text-red-700">
+                <p className="mb-3 rounded-lg bg-red-500/10 p-2 text-xs text-red-600 dark:text-red-400">
                   {error}
                 </p>
               )}
@@ -385,19 +385,19 @@ export default function ConcertApp({
               {tab === "data" && (
                 <div className="space-y-4">
                   <div>
-                    <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+                    <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
                       Backup
                     </h3>
                     <ImportExport shows={myShows} onImported={load} />
                   </div>
                   <div>
-                    <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+                    <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
                       Sample data
                     </h3>
                     <button
                       onClick={handleSeed}
                       disabled={seeding}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                      className="w-full rounded-full border border-line-2 px-3 py-2 text-sm font-medium text-ink transition hover:bg-raised disabled:opacity-60"
                     >
                       {seeding ? "Adding…" : "Load sample shows"}
                     </button>
@@ -456,11 +456,11 @@ function ShowsList({
     col !== sortKey ? "↕" : sortDir === "asc" ? "↑" : "↓";
 
   if (loading) {
-    return <p className="text-sm text-slate-400">Loading…</p>;
+    return <p className="text-sm text-ink-3">Loading…</p>;
   }
   if (shows.length === 0) {
     return (
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-ink-2">
         No shows yet. Add one from the “Add” tab.
       </p>
     );
@@ -468,24 +468,24 @@ function ShowsList({
   return (
     <div>
       {/* Sortable column headers */}
-      <div className="mb-1 flex items-center justify-between border-b border-slate-100 px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+      <div className="mb-1 flex items-center justify-between border-b border-line px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
         <button
           type="button"
           onClick={() => toggle("artist")}
-          className="flex items-center gap-1 transition hover:text-slate-700"
+          className="flex items-center gap-1 transition hover:text-ink"
         >
           Concert{" "}
-          <span className={sortKey === "artist" ? "" : "text-slate-300"}>
+          <span className={sortKey === "artist" ? "" : "opacity-40"}>
             {arrowFor("artist")}
           </span>
         </button>
         <button
           type="button"
           onClick={() => toggle("date")}
-          className="flex items-center gap-1 transition hover:text-slate-700"
+          className="flex items-center gap-1 transition hover:text-ink"
         >
           Date{" "}
-          <span className={sortKey === "date" ? "" : "text-slate-300"}>
+          <span className={sortKey === "date" ? "" : "opacity-40"}>
             {arrowFor("date")}
           </span>
         </button>
@@ -496,7 +496,7 @@ function ShowsList({
           <li key={show.id}>
             <button
               onClick={() => onSelect(show.id)}
-              className="w-full rounded-lg px-2 py-2 text-left transition hover:bg-slate-50"
+              className="w-full rounded-lg px-2 py-2 text-left transition hover:bg-raised"
             >
               <div className="flex items-baseline justify-between gap-2">
                 <span className="flex min-w-0 items-center gap-1.5">
@@ -507,15 +507,15 @@ function ShowsList({
                       title={attendeeOf(show)!.label}
                     />
                   )}
-                  <span className="truncate font-medium text-slate-800">
+                  <span className="truncate font-semibold text-ink">
                     {show.artist}
                   </span>
                 </span>
-                <span className="shrink-0 text-xs tabular-nums text-slate-400">
+                <span className="shrink-0 text-xs tabular-nums text-ink-3">
                   {show.show_date.slice(0, 4)}
                 </span>
               </div>
-              <div className="truncate text-xs text-slate-500">
+              <div className="truncate text-xs text-ink-2">
                 {attendeeOf?.(show) ? `${attendeeOf(show)!.label} · ` : ""}
                 {[show.venue, show.city].filter(Boolean).join(" · ") || "—"}
               </div>
