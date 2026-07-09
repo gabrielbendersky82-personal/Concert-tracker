@@ -318,9 +318,9 @@ function Backdrop() {
         fill
         priority
         sizes="100vw"
-        className="pointer-events-none select-none object-cover opacity-[0.14]"
+        className="pointer-events-none select-none object-cover opacity-40"
       />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-50/75 via-slate-50/55 to-slate-50/85" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-50/55 via-slate-50/25 to-slate-50/65" />
     </>
   );
 }
