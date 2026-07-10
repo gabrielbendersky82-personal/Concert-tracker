@@ -186,7 +186,8 @@ export function spotifySearchQueries(title: string, artist: string): string[] {
 async function spotifyFetch<T>(
   token: string,
   path: string,
-  init?: RequestInit
+  init?: RequestInit,
+  op = "talking to Spotify"
 ): Promise<T> {
   const res = await fetch(path.startsWith("http") ? path : `${API}${path}`, {
     ...init,
@@ -214,13 +215,13 @@ async function spotifyFetch<T>(
     }
     if (res.status === 403) {
       throw new Error(
-        detail
-          ? `Spotify: ${detail}. If your app is in Development mode, add this account under the app's User Management in the Spotify dashboard.`
-          : "Spotify denied the request (403). If your app is in Development mode, add your account under the app's User Management in the Spotify dashboard."
+        `Spotify said 403 (Forbidden) while ${op}. This account isn't authorized to use the app — add the exact email shown on Spotify's login screen under the app's User Management (Development mode).`
       );
     }
     throw new Error(
-      detail ? `Spotify: ${detail}` : `Spotify request failed (${res.status}).`
+      detail
+        ? `Spotify: ${detail} (while ${op})`
+        : `Spotify request failed (${res.status}) while ${op}.`
     );
   }
   return (await res.json().catch(() => ({}))) as T;
@@ -235,7 +236,9 @@ async function findTrackUri(
     const params = new URLSearchParams({ q, type: "track", limit: "1" });
     const data = await spotifyFetch<{ tracks?: { items?: { uri: string }[] } }>(
       token,
-      `/search?${params.toString()}`
+      `/search?${params.toString()}`,
+      undefined,
+      "searching for songs"
     );
     const uri = data.tracks?.items?.[0]?.uri;
     if (uri) return uri;
@@ -264,6 +267,16 @@ export async function createSetlistPlaylist(
   const songs = [...show.setlist_songs].sort((a, b) => a.position - b.position);
   if (songs.length === 0) throw new Error("This show has no setlist to build.");
 
+  // Litmus test first: /me is the most basic authenticated endpoint. If the
+  // account isn't allowlisted for the app, this is where it fails — the
+  // clearest possible signal ("while checking your account").
+  const me = await spotifyFetch<{ id: string }>(
+    token,
+    "/me",
+    undefined,
+    "checking your account"
+  );
+
   // Resolve track URIs with a small concurrency pool (setlists are 10–30 songs).
   const uris: (string | null)[] = new Array(songs.length).fill(null);
   let done = 0;
@@ -289,7 +302,6 @@ export async function createSetlistPlaylist(
     throw new Error("Couldn't find any of these songs on Spotify.");
   }
 
-  const me = await spotifyFetch<{ id: string }>(token, "/me");
   const place = show.venue || show.city || "";
   const name = [show.artist, place, show.show_date.slice(0, 4)]
     .filter(Boolean)
@@ -297,21 +309,31 @@ export async function createSetlistPlaylist(
   const playlist = await spotifyFetch<{
     id: string;
     external_urls: { spotify: string };
-  }>(token, `/users/${me.id}/playlists`, {
-    method: "POST",
-    body: JSON.stringify({
-      name,
-      description: `Setlist from ${show.show_date} · made with Concert Map`,
-      public: false,
-    }),
-  });
+  }>(
+    token,
+    `/users/${me.id}/playlists`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        name,
+        description: `Setlist from ${show.show_date} · made with Concert Map`,
+        public: false,
+      }),
+    },
+    "creating the playlist"
+  );
 
   // Add tracks in order (chunks of 100, though setlists never reach it).
   for (let i = 0; i < foundUris.length; i += 100) {
-    await spotifyFetch(token, `/playlists/${playlist.id}/tracks`, {
-      method: "POST",
-      body: JSON.stringify({ uris: foundUris.slice(i, i + 100) }),
-    });
+    await spotifyFetch(
+      token,
+      `/playlists/${playlist.id}/tracks`,
+      {
+        method: "POST",
+        body: JSON.stringify({ uris: foundUris.slice(i, i + 100) }),
+      },
+      "adding songs"
+    );
   }
 
   return {
