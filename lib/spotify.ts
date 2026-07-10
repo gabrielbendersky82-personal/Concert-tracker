@@ -27,6 +27,7 @@ interface Tokens {
   access_token: string;
   refresh_token: string;
   expires_at: number; // epoch ms
+  scope?: string; // scopes Spotify actually granted
 }
 
 /** Is a Client ID configured at build time? Controls whether UI appears. */
@@ -48,6 +49,7 @@ function saveTokens(data: {
   access_token: string;
   refresh_token?: string;
   expires_in: number;
+  scope?: string;
 }): void {
   const prev = loadTokens();
   const tokens: Tokens = {
@@ -55,6 +57,7 @@ function saveTokens(data: {
     // Spotify may omit refresh_token on refresh; keep the previous one.
     refresh_token: data.refresh_token ?? prev?.refresh_token ?? "",
     expires_at: Date.now() + data.expires_in * 1000,
+    scope: data.scope ?? prev?.scope,
   };
   localStorage.setItem(LS_TOKENS, JSON.stringify(tokens));
 }
@@ -282,6 +285,15 @@ export async function createSetlistPlaylist(
   if (!me.id) {
     throw new Error(
       "Spotify didn't return your account id. Please Reconnect below."
+    );
+  }
+  // If we can see the granted scopes and playlist permission is absent, the
+  // consent didn't grant write access — a reconnect (with the app revoked at
+  // spotify.com/account/apps) is the fix.
+  const granted = loadTokens()?.scope ?? "";
+  if (granted && !granted.includes("playlist-modify")) {
+    throw new Error(
+      `Spotify didn't grant playlist permission (only: ${granted}). Reconnect below and approve it.`
     );
   }
 
