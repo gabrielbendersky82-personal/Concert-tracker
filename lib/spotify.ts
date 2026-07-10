@@ -192,10 +192,33 @@ async function spotifyFetch<T>(
       ...init?.headers,
     },
   });
-  if (res.status === 429) {
-    throw new Error("Spotify is busy right now — try again in a moment.");
+  if (!res.ok) {
+    // Surface Spotify's own error message so failures are self-explanatory.
+    let detail = "";
+    try {
+      const body = await res.json();
+      detail = body?.error?.message || body?.error_description || "";
+    } catch {
+      /* no JSON body */
+    }
+    if (res.status === 429) {
+      throw new Error("Spotify is busy right now — try again in a moment.");
+    }
+    if (res.status === 401) {
+      disconnectSpotify();
+      throw new Error("Your Spotify session expired — please connect again.");
+    }
+    if (res.status === 403) {
+      throw new Error(
+        detail
+          ? `Spotify: ${detail}. If your app is in Development mode, add this account under the app's User Management in the Spotify dashboard.`
+          : "Spotify denied the request (403). If your app is in Development mode, add your account under the app's User Management in the Spotify dashboard."
+      );
+    }
+    throw new Error(
+      detail ? `Spotify: ${detail}` : `Spotify request failed (${res.status}).`
+    );
   }
-  if (!res.ok) throw new Error(`Spotify request failed (${res.status}).`);
   return (await res.json().catch(() => ({}))) as T;
 }
 
