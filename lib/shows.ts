@@ -118,6 +118,32 @@ export async function deleteShow(id: string): Promise<void> {
   if (error) throw error;
 }
 
+/** Set or clear a show's 1–5 rating. */
+export async function updateShowRating(
+  id: string,
+  rating: number | null
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("shows")
+    .update({ rating })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+/** Set or clear the "song of the night" (must be one of the show's songs). */
+export async function updateFavoriteSong(
+  id: string,
+  songId: string | null
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("shows")
+    .update({ favorite_song_id: songId })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 /** Insert many shows sequentially (used by import + sample seed). */
 export async function bulkCreateShows(inputs: NewShowInput[]): Promise<number> {
   let created = 0;

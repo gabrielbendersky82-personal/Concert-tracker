@@ -7,6 +7,8 @@ import GuestBar from "./GuestBar";
 import FriendsToggle from "./FriendsToggle";
 import BrandMark from "./BrandMark";
 import { firstPhotoSrc } from "@/lib/media";
+import { matchesQuery } from "@/lib/searchShows";
+import { isUpcoming, todayISO, untilLabel } from "@/lib/upcoming";
 import type { Show } from "@/lib/types";
 
 // Decorative circle hues (not data encoding — a fun, varied look).
@@ -78,7 +80,7 @@ function ArtistAvatar({ name, hue }: { name: string; hue: string }) {
   );
 }
 
-function ShowCard({ show, hue }: { show: Show; hue: string }) {
+function ShowCard({ show, hue, until }: { show: Show; hue: string; until?: string }) {
   const location =
     [show.city, show.country].filter(Boolean).join(", ") || show.venue || "—";
   const photo = firstPhotoSrc(show);
@@ -91,6 +93,11 @@ function ShowCard({ show, hue }: { show: Show; hue: string }) {
         </div>
         <div className="text-xs tabular-nums text-ink-2">
           {fmtDate(show.show_date)}
+          {until && (
+            <span className="ml-1.5 rounded-md bg-accent/15 px-1.5 py-0.5 text-[10px] font-bold text-accent">
+              {until}
+            </span>
+          )}
         </div>
         <div className="mt-0.5 flex items-center gap-1 text-xs text-ink-3">
           <PinGlyph />
@@ -124,10 +131,12 @@ function Row({
   show,
   hue,
   side,
+  until,
 }: {
   show: Show;
   hue: string;
   side: boolean; // true = right (desktop)
+  until?: string; // set for upcoming shows ("in 12 days")
 }) {
   return (
     <div className="tl-reveal relative mb-5 pl-12 md:pl-0">
@@ -135,7 +144,7 @@ function Row({
         <ArtistAvatar name={show.artist} hue={hue} />
       </div>
       <div className={`md:w-[calc(50%-1.75rem)] ${side ? "md:ml-auto" : ""}`}>
-        <ShowCard show={show} hue={hue} />
+        <ShowCard show={show} hue={hue} until={until} />
       </div>
     </div>
   );
@@ -168,8 +177,10 @@ export default function TimelineView({
         attendees!.find((a) => a.id === show.user_id)?.color ?? null
     : () => null;
 
-  const visibleShows =
+  const [query, setQuery] = useState("");
+  const friendFiltered =
     !showFriends && myId ? shows.filter((s) => s.user_id === myId) : shows;
+  const visibleShows = friendFiltered.filter((s) => matchesQuery(s, query));
   const ordered = [...visibleShows].sort((a, b) =>
     a.show_date.localeCompare(b.show_date)
   );
@@ -272,13 +283,37 @@ export default function TimelineView({
   }
 
   // Build the interleaved marker + row list with a running hue/side index.
+  // Future shows sit in their own "Coming up" block at the chronological end.
+  const today = todayISO();
   let gi = 0;
   const items: React.ReactNode[] = [];
   for (const g of groups) {
-    items.push(<YearMarker key={`y-${g.year}`} year={g.year} count={g.shows.length} />);
-    for (const s of g.shows) {
+    const past = g.shows.filter((s) => !isUpcoming(s, today));
+    if (past.length === 0) continue;
+    items.push(<YearMarker key={`y-${g.year}`} year={g.year} count={past.length} />);
+    for (const s of past) {
       const hue = attendeeColor(s) ?? HUES[gi % HUES.length];
       items.push(<Row key={s.id} show={s} hue={hue} side={gi % 2 === 1} />);
+      gi += 1;
+    }
+  }
+  const future = ordered.filter((s) => isUpcoming(s, today));
+  if (future.length > 0) {
+    items.push(
+      <div
+        key="coming-up"
+        className="tl-reveal relative my-7 flex pl-3 md:justify-center md:pl-0"
+      >
+        <span className="rounded-full border border-dashed border-accent bg-surface px-4 py-1.5 text-sm font-bold text-accent shadow-sm">
+          Coming up · {future.length} show{future.length === 1 ? "" : "s"}
+        </span>
+      </div>
+    );
+    for (const s of future) {
+      const hue = attendeeColor(s) ?? HUES[gi % HUES.length];
+      items.push(
+        <Row key={s.id} show={s} hue={hue} side={gi % 2 === 1} until={untilLabel(s.show_date, today)} />
+      );
       gi += 1;
     }
   }
@@ -324,6 +359,15 @@ export default function TimelineView({
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {(shows.length > 0 || query) && (
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search shows…"
+                className="w-40 rounded-full border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none sm:w-48"
+              />
+            )}
             {hasFriends && (
               <FriendsToggle value={showFriends} onChange={setShowFriends} />
             )}
@@ -348,7 +392,17 @@ export default function TimelineView({
           </div>
         </div>
 
-        {ordered.length === 0 ? (
+        {ordered.length === 0 && query.trim() ? (
+          <div className="rounded-2xl border border-line bg-surface p-10 text-center">
+            <p className="font-medium text-ink">No shows match your search</p>
+            <button
+              onClick={() => setQuery("")}
+              className="mt-3 rounded-full border border-line-2 px-4 py-2 text-sm font-medium text-ink transition hover:bg-raised"
+            >
+              Clear search
+            </button>
+          </div>
+        ) : ordered.length === 0 ? (
           <div className="rounded-2xl border border-line bg-surface p-10 text-center">
             <div className="mb-2 text-3xl" aria-hidden>
               🎶

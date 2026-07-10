@@ -3,9 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { bulkCreateShows, deleteShow } from "@/lib/shows";
+import {
+  bulkCreateShows,
+  deleteShow,
+  updateFavoriteSong,
+  updateShowRating,
+} from "@/lib/shows";
 import { addShowVideo, deleteShowMedia, uploadShowPhoto } from "@/lib/media";
 import { loadMineAndFriends } from "@/lib/social";
+import { matchesQuery } from "@/lib/searchShows";
+import { onThisDay } from "@/lib/memories";
+import { nextUpcoming, untilLabel } from "@/lib/upcoming";
 import { createClient } from "@/lib/supabase/client";
 import { SAMPLE_SHOWS } from "@/lib/sampleShows";
 import type { Show, ShowMedia } from "@/lib/types";
@@ -73,6 +81,7 @@ export default function ConcertApp({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [memoryDismissed, setMemoryDismissed] = useState(false);
 
   const visibleTabs = readOnly
     ? TABS.filter((t) => t.id === "shows" || t.id === "stats")
@@ -80,8 +89,14 @@ export default function ConcertApp({
 
   const hasFriends = attendees.length > 1;
   // Show only my shows when the toggle is off; otherwise everyone's.
-  const visibleShows =
+  const friendFiltered =
     !showFriends && myId ? shows.filter((s) => s.user_id === myId) : shows;
+  // The search box narrows the map, list and stats together.
+  const [query, setQuery] = useState("");
+  const visibleShows = useMemo(
+    () => friendFiltered.filter((s) => matchesQuery(s, query)),
+    [friendFiltered, query]
+  );
 
   // Color pins/list/legend by attendee, but only while showing friends.
   const attendeeMap = useMemo(
@@ -171,6 +186,16 @@ export default function ConcertApp({
 
   async function handleDeleteMedia(m: ShowMedia) {
     await deleteShowMedia(m);
+    await load();
+  }
+
+  async function handleRate(showId: string, rating: number | null) {
+    await updateShowRating(showId, rating);
+    await load();
+  }
+
+  async function handleFavorite(showId: string, songId: string | null) {
+    await updateFavoriteSong(showId, songId);
     await load();
   }
 
@@ -329,6 +354,99 @@ export default function ConcertApp({
           </div>
         )}
 
+        {shows.length > 0 && (
+          <div className="relative border-t border-line px-4 py-2">
+            <svg
+              viewBox="0 0 24 24"
+              className="pointer-events-none absolute left-6 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" strokeLinecap="round" />
+            </svg>
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search artist, venue, city, year…"
+              className="w-full rounded-full border border-line bg-raised py-1.5 pl-8 pr-8 text-sm text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="absolute right-6 top-1/2 -translate-y-1/2 text-ink-3 transition hover:text-ink"
+                aria-label="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
+
+        {(() => {
+          const next = nextUpcoming(visibleShows);
+          if (!next) return null;
+          return (
+            <button
+              onClick={() => handleSelect(next.id)}
+              className="flex w-full items-center gap-2 border-t border-line px-4 py-2 text-left transition hover:bg-raised"
+            >
+              <span className="shrink-0 rounded-md bg-accent/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent">
+                Next up
+              </span>
+              <span className="min-w-0 flex-1 truncate text-xs text-ink-2">
+                <span className="font-semibold text-ink">{next.artist}</span>
+                {next.city ? ` · ${next.city}` : ""}
+              </span>
+              <span className="shrink-0 text-xs font-medium text-accent">
+                {untilLabel(next.show_date)}
+              </span>
+            </button>
+          );
+        })()}
+
+        {(() => {
+          if (memoryDismissed) return null;
+          // Memories only from my own history, not friends'.
+          const memory = onThisDay(myId ? shows.filter((s) => s.user_id === myId) : shows);
+          if (!memory) return null;
+          const when =
+            memory.distance === 0
+              ? `On this day in ${memory.show.show_date.slice(0, 4)}`
+              : `This week in ${memory.show.show_date.slice(0, 4)}`;
+          return (
+            <div className="flex w-full items-center gap-2 border-t border-line px-4 py-2">
+              <button
+                onClick={() => handleSelect(memory.show.id)}
+                className="flex min-w-0 flex-1 items-center gap-2 text-left"
+              >
+                <span aria-hidden className="shrink-0 text-sm">
+                  ✨
+                </span>
+                <span className="min-w-0 flex-1 truncate text-xs text-ink-2">
+                  <span className="font-semibold text-accent">{when}</span>
+                  {" — "}
+                  <span className="font-semibold text-ink">
+                    {memory.show.artist}
+                  </span>
+                  {memory.show.venue ? ` at ${memory.show.venue}` : memory.show.city ? ` in ${memory.show.city}` : ""}
+                </span>
+              </button>
+              <button
+                onClick={() => setMemoryDismissed(true)}
+                className="shrink-0 text-ink-3 transition hover:text-ink"
+                aria-label="Dismiss memory"
+              >
+                ✕
+              </button>
+            </div>
+          );
+        })()}
+
         {selectedShow ? (
           <div className="min-h-0 flex-1 overflow-y-auto border-t border-line p-4">
             <ShowDetail
@@ -338,6 +456,8 @@ export default function ConcertApp({
               onAddPhotos={canEditSelected ? handleAddPhotos : undefined}
               onAddVideo={canEditSelected ? handleAddVideo : undefined}
               onDeleteMedia={canEditSelected ? handleDeleteMedia : undefined}
+              onRate={canEditSelected ? handleRate : undefined}
+              onFavorite={canEditSelected ? handleFavorite : undefined}
             />
           </div>
         ) : (
@@ -377,6 +497,7 @@ export default function ConcertApp({
                   loading={loading}
                   onSelect={handleSelect}
                   attendeeOf={attendeeOf}
+                  searching={query.trim().length > 0}
                 />
               )}
 
@@ -420,11 +541,13 @@ function ShowsList({
   loading,
   onSelect,
   attendeeOf,
+  searching = false,
 }: {
   shows: Show[];
   loading: boolean;
   onSelect: (id: string) => void;
   attendeeOf?: (show: Show) => { label: string; color: string } | null;
+  searching?: boolean;
 }) {
   // Default: latest concerts first.
   const [sortKey, setSortKey] = useState<SortKey>("date");
@@ -461,7 +584,9 @@ function ShowsList({
   if (shows.length === 0) {
     return (
       <p className="text-sm text-ink-2">
-        No shows yet. Add one from the “Add” tab.
+        {searching
+          ? "No shows match your search."
+          : "No shows yet. Add one from the “Add” tab."}
       </p>
     );
   }

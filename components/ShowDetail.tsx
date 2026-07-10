@@ -21,6 +21,8 @@ export default function ShowDetail({
   onAddPhotos,
   onAddVideo,
   onDeleteMedia,
+  onRate,
+  onFavorite,
 }: {
   show: Show;
   onClose: () => void;
@@ -28,6 +30,10 @@ export default function ShowDetail({
   onAddPhotos?: (showId: string, files: File[]) => Promise<void>;
   onAddVideo?: (showId: string, url: string) => Promise<void>;
   onDeleteMedia?: (m: ShowMedia) => Promise<void>;
+  /** Owner-only: set/clear the 1–5 rating (click the current value to clear). */
+  onRate?: (showId: string, rating: number | null) => Promise<void>;
+  /** Owner-only: set/clear the song of the night. */
+  onFavorite?: (showId: string, songId: string | null) => Promise<void>;
 }) {
   const media = show.show_media ?? [];
   const canEdit = !!onAddPhotos || !!onAddVideo;
@@ -80,6 +86,10 @@ export default function ShowDetail({
           <p className="mt-1 text-xs text-ink-3">
             {formatDate(show.show_date)}
           </p>
+          <RatingDots
+            rating={show.rating ?? null}
+            onRate={onRate ? (r) => onRate(show.id, r) : undefined}
+          />
         </div>
         <button
           onClick={onClose}
@@ -112,17 +122,54 @@ export default function ShowDetail({
           <p className="text-sm text-ink-3">No setlist recorded.</p>
         ) : (
           <ol className="space-y-1">
-            {show.setlist_songs.map((song) => (
-              <li
-                key={song.id}
-                className="flex gap-2 text-sm text-ink-2"
-              >
-                <span className="w-5 shrink-0 text-right tabular-nums text-ink-3">
-                  {song.position}
-                </span>
-                <span>{song.title}</span>
-              </li>
-            ))}
+            {show.setlist_songs.map((song) => {
+              const isFavorite = show.favorite_song_id === song.id;
+              return (
+                <li
+                  key={song.id}
+                  className="group flex items-baseline gap-2 text-sm text-ink-2"
+                >
+                  <span className="w-5 shrink-0 text-right tabular-nums text-ink-3">
+                    {song.position}
+                  </span>
+                  <span className={isFavorite ? "font-semibold text-ink" : ""}>
+                    {song.title}
+                  </span>
+                  {onFavorite ? (
+                    <button
+                      type="button"
+                      onClick={() => onFavorite(show.id, isFavorite ? null : song.id)}
+                      title={
+                        isFavorite
+                          ? "Clear song of the night"
+                          : "Mark as song of the night"
+                      }
+                      aria-label={
+                        isFavorite
+                          ? "Clear song of the night"
+                          : `Mark ${song.title} as song of the night`
+                      }
+                      className={`ml-auto shrink-0 transition ${
+                        isFavorite
+                          ? "text-accent"
+                          : "text-ink-3 opacity-0 hover:text-accent group-hover:opacity-100"
+                      }`}
+                    >
+                      {isFavorite ? "★" : "☆"}
+                    </button>
+                  ) : (
+                    isFavorite && (
+                      <span
+                        className="ml-auto shrink-0 text-accent"
+                        title="Song of the night"
+                      >
+                        ★
+                      </span>
+                    )
+                  )}
+                </li>
+              );
+            })}
           </ol>
         )}
       </div>
@@ -188,6 +235,60 @@ export default function ShowDetail({
         >
           Delete show
         </button>
+      )}
+    </div>
+  );
+}
+
+/** 1–5 rating as filled dots. Editable when onRate is provided; clicking the
+ *  current rating clears it. Hidden entirely when unrated and read-only. */
+function RatingDots({
+  rating,
+  onRate,
+}: {
+  rating: number | null;
+  onRate?: (rating: number | null) => Promise<void>;
+}) {
+  if (!onRate && !rating) return null;
+  return (
+    <div
+      className="mt-1.5 flex items-center gap-1"
+      role={onRate ? "radiogroup" : undefined}
+      aria-label="Rating"
+    >
+      {[1, 2, 3, 4, 5].map((n) => {
+        const filled = (rating ?? 0) >= n;
+        const dot = (
+          <span
+            className={`block h-2.5 w-2.5 rounded-full transition ${
+              filled ? "bg-accent" : "bg-line-2"
+            }`}
+          />
+        );
+        return onRate ? (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onRate(rating === n ? null : n)}
+            aria-label={`Rate ${n} of 5`}
+            aria-checked={rating === n}
+            role="radio"
+            className="p-0.5 transition hover:scale-125"
+          >
+            {dot}
+          </button>
+        ) : (
+          <span key={n} className="p-0.5">
+            {dot}
+          </span>
+        );
+      })}
+      {rating ? (
+        <span className="ml-1 text-xs tabular-nums text-ink-3">
+          {rating}/5
+        </span>
+      ) : (
+        <span className="ml-1 text-xs text-ink-3">Rate it</span>
       )}
     </div>
   );

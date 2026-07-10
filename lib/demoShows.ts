@@ -32,6 +32,10 @@ interface DemoSeed {
   setlist: string[];
   photos?: string[];
   videos?: string[];
+  /** 1–5 dots. */
+  rating?: number;
+  /** 1-based setlist position of the "song of the night". */
+  favorite?: number;
 }
 
 const SEED: DemoSeed[] = [
@@ -307,6 +311,8 @@ const SEED: DemoSeed[] = [
     "show_date": "2013-05-25",
     "latitude": 41.3887868890716,
     "longitude": 2.15898513793945,
+    "rating": 5,
+    "favorite": 13,
     "setlist": [
       "I Only Said",
       "When You Sleep",
@@ -515,6 +521,8 @@ const SEED: DemoSeed[] = [
     "show_date": "2017-07-19",
     "latitude": 32.0666667,
     "longitude": 34.7666667,
+    "rating": 5,
+    "favorite": 10,
     "setlist": [
       "Daydreaming",
       "Lucky",
@@ -1213,6 +1221,8 @@ const SEED: DemoSeed[] = [
     "show_date": "2026-06-24",
     "latitude": 37.9474464019929,
     "longitude": 23.6370849609375,
+    "rating": 5,
+    "favorite": 15,
     "setlist": [
       "Get Ready for Love",
       "From Her to Eternity",
@@ -1386,6 +1396,28 @@ const SEED: DemoSeed[] = [
     ]
   },
   {
+    "attendee": "maya",
+    "artist": "Rosalía",
+    "venue": "Palau Sant Jordi",
+    "city": "Barcelona",
+    "country": "Spain",
+    "show_date": "2026-10-02",
+    "latitude": 41.3739,
+    "longitude": 2.153,
+    "setlist": []
+  },
+  {
+    "attendee": "leo",
+    "artist": "Fontaines D.C.",
+    "venue": "Alexandra Palace",
+    "city": "London",
+    "country": "United Kingdom",
+    "show_date": "2026-11-20",
+    "latitude": 51.5942,
+    "longitude": -0.13,
+    "setlist": []
+  },
+  {
     "attendee": "leo",
     "artist": "Fred again..",
     "venue": "Sydney Opera House Forecourt",
@@ -1437,6 +1469,11 @@ export const DEMO_SHOWS: Show[] = SEED.map((s, i) => {
     longitude: s.longitude,
     show_date: s.show_date,
     notes: s.notes ?? null,
+    rating: s.rating ?? null,
+    favorite_song_id:
+      s.favorite && s.favorite >= 1 && s.favorite <= s.setlist.length
+        ? `${id}-song-${s.favorite}`
+        : null,
     created_at: `${s.show_date}T00:00:00.000Z`,
     setlist_songs: s.setlist.map((title, j) => ({
       id: `${id}-song-${j + 1}`,

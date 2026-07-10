@@ -29,6 +29,10 @@ export interface Show {
   longitude: number | null;
   show_date: string; // ISO date (YYYY-MM-DD)
   notes: string | null;
+  /** 1–5 dots; null/undefined = unrated. */
+  rating?: number | null;
+  /** "Song of the night" — id of one of the show's setlist_songs. */
+  favorite_song_id?: string | null;
   created_at: string;
   setlist_songs: SetlistSong[];
   show_media?: ShowMedia[];

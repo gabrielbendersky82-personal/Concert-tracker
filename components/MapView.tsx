@@ -13,6 +13,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { firstPhotoSrc } from "@/lib/media";
 import { useTheme } from "@/lib/theme";
+import { isUpcoming, todayISO } from "@/lib/upcoming";
 import type { Show } from "@/lib/types";
 
 // CARTO basemaps per theme: voyager for light, dark_all for dark so the
@@ -25,23 +26,29 @@ const TILE_URL = {
 // Custom SVG pin so we don't depend on Leaflet's bundled marker images.
 // `color` sets the fill (e.g. per-attendee); the selected pin is enlarged with a
 // white ring for emphasis. When `count` > 1 the pin head shows the number of
-// shows at that spot instead of the plain dot.
-function pinIcon(color: string, active: boolean, count = 1) {
+// shows at that spot instead of the plain dot. Upcoming shows render hollow —
+// an outlined pin waiting to be filled in.
+function pinIcon(color: string, active: boolean, count = 1, upcoming = false) {
   const w = active ? 38 : 30;
   const h = active ? 50 : 40;
   const label = count > 99 ? "99+" : String(count);
   const fontSize = label.length > 2 ? 6.5 : label.length > 1 ? 8 : 9.5;
+  const headFill = upcoming ? color : "white";
+  const textFill = upcoming ? "white" : color;
   const head =
     count > 1
-      ? `<circle cx="12" cy="12" r="7" fill="white"/>
-      <text x="12" y="12" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="${fontSize}" font-weight="700" fill="${color}">${label}</text>`
-      : `<circle cx="12" cy="12" r="5" fill="white"/>`;
+      ? `<circle cx="12" cy="12" r="7" fill="${headFill}"/>
+      <text x="12" y="12" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="${fontSize}" font-weight="700" fill="${textFill}">${label}</text>`
+      : `<circle cx="12" cy="12" r="${upcoming ? 4 : 5}" fill="${headFill}"/>`;
+  const body = upcoming
+    ? `fill="var(--surface)" stroke="${color}" stroke-width="2.5"`
+    : `fill="${color}" stroke="${active ? "#ffffff" : "none"}" stroke-width="${
+        active ? 1.5 : 0
+      }"`;
   return L.divIcon({
     className: "concert-pin",
     html: `<svg width="${w}" height="${h}" viewBox="0 0 24 32" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 0C5.4 0 0 5.4 0 12c0 8.4 12 20 12 20s12-11.6 12-20C24 5.4 18.6 0 12 0z" fill="${color}" stroke="${
-        active ? "#ffffff" : "none"
-      }" stroke-width="${active ? 1.5 : 0}"/>
+      <path d="M12 0C5.4 0 0 5.4 0 12c0 8.4 12 20 12 20s12-11.6 12-20C24 5.4 18.6 0 12 0z" ${body}/>
       ${head}
     </svg>`,
     iconSize: [w, h],
@@ -230,6 +237,8 @@ export default function MapView({
           const show = group.shows[0];
           const active = group.shows.some((s) => s.id === selectedId);
           const place = groupPlace(group.shows);
+          const today = todayISO();
+          const upcoming = group.shows.every((s) => isUpcoming(s, today));
           return (
             <Marker
               key={group.key}
@@ -237,7 +246,8 @@ export default function MapView({
               icon={pinIcon(
                 groupColor(group.shows, colorOf),
                 active,
-                group.shows.length
+                group.shows.length,
+                upcoming
               )}
               // Badged pins float above singles so counts never hide.
               zIndexOffset={single ? 0 : 250}
