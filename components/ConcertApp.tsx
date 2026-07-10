@@ -159,6 +159,25 @@ export default function ConcertApp({
     setSheetOpen(true);
   }, []);
 
+  // Reopen a show when returning from the Spotify consent redirect
+  // (…/spotify/callback → back here with ?show=<id>). Runs once on mount.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const showId = params.get("show");
+    if (!showId) return;
+    // Reading the URL (an external system) then opening that show.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedId(showId);
+    setSheetOpen(true);
+    params.delete("show");
+    const qs = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      window.location.pathname + (qs ? `?${qs}` : "")
+    );
+  }, []);
+
   async function handleCreated() {
     await load();
     setTab("shows");

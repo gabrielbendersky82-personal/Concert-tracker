@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import ShowMediaGallery from "./ShowMediaGallery";
+import SpotifyPlaylist from "./SpotifyPlaylist";
 import type { Show, ShowMedia } from "@/lib/types";
 
 function formatDate(iso: string): string {
@@ -173,6 +174,8 @@ export default function ShowDetail({
           </ol>
         )}
       </div>
+
+      <SpotifyPlaylist show={show} />
 
       <ShowMediaGallery
         media={media}
