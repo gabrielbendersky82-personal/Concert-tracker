@@ -3,8 +3,12 @@ import { buildAttendees } from "./attendees";
 import type { Attendee } from "./demoShows";
 import type { Friendship, Profile, Show } from "./types";
 
-const SELECT_WITH_MEDIA = "*, setlist_songs(*), show_media(*)";
-const SELECT_NO_MEDIA = "*, setlist_songs(*)";
+// The setlist embed names its FK explicitly: since favorite_song_id (0005)
+// there are two relationships between shows and setlist_songs, and a bare
+// setlist_songs(*) embed is ambiguous to PostgREST.
+const SELECT_WITH_MEDIA =
+  "*, setlist_songs!setlist_songs_show_id_fkey(*), show_media(*)";
+const SELECT_NO_MEDIA = "*, setlist_songs!setlist_songs_show_id_fkey(*)";
 
 function sortRelations(show: {
   setlist_songs?: { position: number }[];

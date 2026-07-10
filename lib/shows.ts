@@ -1,8 +1,12 @@
 import { createClient } from "./supabase/client";
 import type { NewShowInput, Show } from "./types";
 
-const SELECT_WITH_MEDIA = "*, setlist_songs(*), show_media(*)";
-const SELECT_NO_MEDIA = "*, setlist_songs(*)";
+// The setlist embed names its FK explicitly: since favorite_song_id (0005)
+// there are two relationships between shows and setlist_songs, and a bare
+// setlist_songs(*) embed is ambiguous to PostgREST.
+const SELECT_WITH_MEDIA =
+  "*, setlist_songs!setlist_songs_show_id_fkey(*), show_media(*)";
+const SELECT_NO_MEDIA = "*, setlist_songs!setlist_songs_show_id_fkey(*)";
 
 /**
  * Select shows, retrying without the `show_media` embed if that table isn't
