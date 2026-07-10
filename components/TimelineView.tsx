@@ -11,7 +11,8 @@ import { matchesQuery } from "@/lib/searchShows";
 import { isUpcoming, todayISO, untilLabel } from "@/lib/upcoming";
 import type { Show } from "@/lib/types";
 
-// Decorative circle hues (not data encoding — a fun, varied look).
+// Decorative card hues (not data encoding — a fun, varied look). When the
+// friends view is on, the attendee color wins instead.
 const HUES = [
   "#6366f1",
   "#ec4899",
@@ -25,127 +26,196 @@ const HUES = [
   "#0ea5e9",
 ];
 
+// Reveal + tilt live together so the transition doesn't fight the hover
+// straighten. Capture mode forces everything visible for the PNG export.
 const CSS = `
-.tl-reveal { opacity: 0; transform: translateY(18px); transition: opacity .5s ease, transform .5s ease; }
-.tl-reveal.is-visible { opacity: 1; transform: none; }
-.tl-capture .tl-reveal { opacity: 1 !important; transform: none !important; }
+.tl-reveal { opacity: 0; transform: translateY(14px) rotate(var(--tilt, 0deg)); transition: opacity .45s ease, transform .45s ease; }
+.tl-reveal.is-visible { opacity: 1; transform: rotate(var(--tilt, 0deg)); }
+.tl-reveal.is-visible:hover { transform: none; }
+.tl-capture .tl-reveal { opacity: 1 !important; transform: rotate(var(--tilt, 0deg)) !important; }
 @media (prefers-reduced-motion: reduce) {
-  .tl-reveal { opacity: 1; transform: none; transition: none; }
+  .tl-reveal { opacity: 1; transform: rotate(var(--tilt, 0deg)); transition: none; }
 }
 `;
 
-function fmtDate(iso: string): string {
-  if (/^\d{4}$/.test(iso)) return iso;
+function fmtShort(iso: string): string {
   const d = new Date(iso + "T00:00:00");
   return Number.isNaN(d.getTime())
     ? iso
-    : d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+    : d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
-function PinGlyph() {
-  return (
-    <svg
-      className="h-3 w-3 shrink-0 text-ink-3"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M12 21s-6-5.4-6-10a6 6 0 1112 0c0 4.6-6 10-6 10z" />
-      <circle cx="12" cy="11" r="2" />
-    </svg>
-  );
+function fmtFull(iso: string): string {
+  const d = new Date(iso + "T00:00:00");
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString(undefined, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
 }
 
-function ArtistAvatar({ name, hue }: { name: string; hue: string }) {
+/** Square art tile: the show photo if there is one, else the artist image
+ *  from Deezer, else a hue-gradient monogram. */
+function ArtTile({ show, hue }: { show: Show; hue: string }) {
   const [failed, setFailed] = useState(false);
-  const initial = (name || "?").charAt(0).toUpperCase();
+  const photo = firstPhotoSrc(show);
+  const initial = (show.artist || "?").charAt(0).toUpperCase();
   return (
     <span
-      className="relative grid h-9 w-9 place-items-center overflow-hidden rounded-full text-xs font-bold text-white shadow ring-4 ring-surface"
-      style={{ background: hue }}
+      className="relative grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-lg text-base font-extrabold text-white/90"
+      style={{ background: `linear-gradient(135deg, ${hue}, ${hue}55)` }}
     >
       {initial}
-      {!failed && (
+      {photo ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={`/api/artist-image?name=${encodeURIComponent(name)}`}
+          src={photo}
           alt=""
           loading="lazy"
-          onError={() => setFailed(true)}
           className="absolute inset-0 h-full w-full object-cover"
         />
+      ) : (
+        !failed && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`/api/artist-image?name=${encodeURIComponent(show.artist)}`}
+            alt=""
+            loading="lazy"
+            onError={() => setFailed(true)}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )
       )}
     </span>
   );
 }
 
-function ShowCard({ show, hue, until }: { show: Show; hue: string; until?: string }) {
-  const location =
-    [show.city, show.country].filter(Boolean).join(", ") || show.venue || "—";
-  const photo = firstPhotoSrc(show);
+/** Compact list-row card — the dense unit of the stack. */
+function CompactCard({
+  show,
+  hue,
+  tilt,
+  until,
+}: {
+  show: Show;
+  hue: string;
+  tilt: number;
+  until?: string;
+}) {
+  const meta = [show.venue, show.city].filter(Boolean).join(" · ");
   return (
-    <div className="group relative flex items-stretch overflow-hidden rounded-xl bg-surface shadow-sm ring-1 ring-line transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
-      <div className="w-1.5 shrink-0" style={{ background: hue }} />
-      <div className="min-w-0 flex-1 py-2.5 pl-2.5 pr-3">
-        <div className="truncate text-sm font-semibold text-ink">
+    <article
+      className="tl-reveal mb-2.5 flex break-inside-avoid items-center gap-2.5 rounded-xl border border-line bg-surface p-2 shadow-sm transition hover:border-[var(--hue)]"
+      style={
+        {
+          "--tilt": `${tilt}deg`,
+          "--hue": hue,
+        } as React.CSSProperties
+      }
+    >
+      <ArtTile show={show} hue={hue} />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[13.5px] font-bold leading-tight text-ink">
           {show.artist}
         </div>
-        <div className="text-xs tabular-nums text-ink-2">
-          {fmtDate(show.show_date)}
+        <div className="truncate text-[11.5px] text-ink-2">
+          {meta}
+          {meta ? " · " : ""}
+          <span className="tabular-nums text-ink-3">
+            {fmtShort(show.show_date)}
+          </span>
           {until && (
             <span className="ml-1.5 rounded-md bg-accent/15 px-1.5 py-0.5 text-[10px] font-bold text-accent">
               {until}
             </span>
           )}
         </div>
-        <div className="mt-0.5 flex items-center gap-1 text-xs text-ink-3">
-          <PinGlyph />
-          <span className="truncate">{location}</span>
-        </div>
       </div>
-      {photo && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={photo}
-          alt=""
-          loading="lazy"
-          className="my-2 mr-2 h-14 w-14 shrink-0 self-center rounded-lg object-cover"
-        />
-      )}
-    </div>
+    </article>
   );
 }
 
-function YearMarker({ year, count }: { year: string; count: number }) {
+/** Full-width banner card for 5-star nights — the stack's grid-breaker. */
+function HeroCard({ show, hue }: { show: Show; hue: string }) {
+  const photo = firstPhotoSrc(show);
+  const meta = [show.venue, show.city].filter(Boolean).join(" · ");
+  const favorite = show.favorite_song_id
+    ? show.setlist_songs.find((s) => s.id === show.favorite_song_id)
+    : null;
   return (
-    <div className="tl-reveal relative my-7 flex pl-3 md:justify-center md:pl-0">
-      <span className="rounded-full border border-accent bg-surface px-4 py-1.5 text-sm font-bold tabular-nums text-accent shadow-sm">
-        {year} · {count} show{count === 1 ? "" : "s"}
-      </span>
-    </div>
+    <article className="tl-reveal mb-3 overflow-hidden rounded-xl border border-line bg-surface shadow-md">
+      <div
+        className="relative flex h-24 items-end px-3.5 pb-2.5 sm:h-28"
+        style={{ background: `linear-gradient(135deg, ${hue}, ${hue}55)` }}
+      >
+        {photo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={photo}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg, transparent 25%, rgba(0,0,0,0.72))",
+          }}
+        />
+        <h3
+          className="relative z-10 text-lg font-extrabold tracking-tight text-white sm:text-xl"
+          style={{ textShadow: "0 1px 12px rgba(0,0,0,0.6)" }}
+        >
+          {show.artist}
+        </h3>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3.5 py-2">
+        <span className="min-w-0 truncate text-xs text-ink-2">
+          {meta}
+          {meta ? " · " : ""}
+          <span className="tabular-nums text-ink-3">
+            {fmtFull(show.show_date)}
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-1">
+          {Array.from({ length: show.rating ?? 0 }, (_, i) => (
+            <i key={i} className="h-1.5 w-1.5 rounded-full bg-accent" />
+          ))}
+          <span className="ml-1 truncate text-[10px] font-bold text-accent">
+            {favorite ? `★ ${favorite.title}` : "song of the night ★"}
+          </span>
+        </span>
+      </div>
+    </article>
   );
 }
 
-function Row({
-  show,
-  hue,
-  side,
-  until,
+function YearHeader({
+  year,
+  count,
+  upcoming = false,
 }: {
-  show: Show;
-  hue: string;
-  side: boolean; // true = right (desktop)
-  until?: string; // set for upcoming shows ("in 12 days")
+  year: string;
+  count: number;
+  upcoming?: boolean;
 }) {
   return (
-    <div className="tl-reveal relative mb-5 pl-12 md:pl-0">
-      <div className="absolute left-[22px] top-3 z-10 -translate-x-1/2 md:left-1/2">
-        <ArtistAvatar name={show.artist} hue={hue} />
-      </div>
-      <div className={`md:w-[calc(50%-1.75rem)] ${side ? "md:ml-auto" : ""}`}>
-        <ShowCard show={show} hue={hue} until={until} />
-      </div>
+    <div className="tl-reveal relative flex items-baseline gap-2.5 pb-2.5 pt-6">
+      <span
+        className={`absolute -left-[26px] top-1/2 h-[11px] w-[11px] rounded-full ring-4 ring-ground ${
+          upcoming ? "border border-dashed border-accent bg-surface" : "bg-accent"
+        }`}
+      />
+      <b className="text-[28px] font-extrabold leading-none tracking-tight text-ink sm:text-[32px]">
+        {year}
+      </b>
+      <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-3">
+        {count} show{count === 1 ? "" : "s"}
+      </span>
     </div>
   );
 }
@@ -169,6 +239,9 @@ export default function TimelineView({
   const [capturing, setCapturing] = useState(false);
   const [busy, setBusy] = useState<"" | "export" | "share">("");
   const [showFriends, setShowFriends] = useState(true);
+  const [spot, setSpot] = useState<{ year: string; count: number } | null>(
+    null
+  );
 
   const hasFriends = !!attendees && attendees.length > 1;
   const colorActive = hasFriends && showFriends;
@@ -215,7 +288,29 @@ export default function TimelineView({
     );
     root.querySelectorAll(".tl-reveal").forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [ordered.length, showFriends]);
+  }, [ordered.length, showFriends, query]);
+
+  // Floating "where am I" chip: track which year block is in view.
+  useEffect(() => {
+    const root = captureRef.current;
+    if (!root) return;
+    const spy = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            const el = e.target as HTMLElement;
+            setSpot({
+              year: el.dataset.tlYear ?? "",
+              count: Number(el.dataset.tlCount ?? 0),
+            });
+          }
+        }
+      },
+      { rootMargin: "-20% 0px -70% 0px" }
+    );
+    root.querySelectorAll("[data-tl-year]").forEach((el) => spy.observe(el));
+    return () => spy.disconnect();
+  }, [ordered.length, showFriends, query]);
 
   async function makePng(): Promise<string | null> {
     const node = captureRef.current;
@@ -282,40 +377,59 @@ export default function TimelineView({
     setBusy("");
   }
 
-  // Build the interleaved marker + row list with a running hue/side index.
+  // Build year sections: 5-star heroes lead each year, the rest pack tight.
   // Future shows sit in their own "Coming up" block at the chronological end.
   const today = todayISO();
-  let gi = 0;
-  const items: React.ReactNode[] = [];
+  const orderIndex = new Map(ordered.map((s, i) => [s.id, i]));
+  const hueOf = (s: Show) =>
+    attendeeColor(s) ?? HUES[(orderIndex.get(s.id) ?? 0) % HUES.length];
+  const tiltOf = (s: Show) =>
+    ((((orderIndex.get(s.id) ?? 0) * 7) % 5) - 2) * 0.6;
+
+  const sections: React.ReactNode[] = [];
   for (const g of groups) {
     const past = g.shows.filter((s) => !isUpcoming(s, today));
     if (past.length === 0) continue;
-    items.push(<YearMarker key={`y-${g.year}`} year={g.year} count={past.length} />);
-    for (const s of past) {
-      const hue = attendeeColor(s) ?? HUES[gi % HUES.length];
-      items.push(<Row key={s.id} show={s} hue={hue} side={gi % 2 === 1} />);
-      gi += 1;
-    }
+    const heroes = past.filter((s) => s.rating === 5);
+    const rest = past.filter((s) => s.rating !== 5);
+    sections.push(
+      <section key={g.year} data-tl-year={g.year} data-tl-count={past.length}>
+        <YearHeader year={g.year} count={past.length} />
+        {heroes.map((s) => (
+          <HeroCard key={s.id} show={s} hue={hueOf(s)} />
+        ))}
+        {rest.length > 0 && (
+          <div className="columns-1 gap-x-2.5 sm:columns-2">
+            {rest.map((s) => (
+              <CompactCard key={s.id} show={s} hue={hueOf(s)} tilt={tiltOf(s)} />
+            ))}
+          </div>
+        )}
+      </section>
+    );
   }
   const future = ordered.filter((s) => isUpcoming(s, today));
   if (future.length > 0) {
-    items.push(
-      <div
+    sections.push(
+      <section
         key="coming-up"
-        className="tl-reveal relative my-7 flex pl-3 md:justify-center md:pl-0"
+        data-tl-year="Coming up"
+        data-tl-count={future.length}
       >
-        <span className="rounded-full border border-dashed border-accent bg-surface px-4 py-1.5 text-sm font-bold text-accent shadow-sm">
-          Coming up · {future.length} show{future.length === 1 ? "" : "s"}
-        </span>
-      </div>
+        <YearHeader year="Coming up" count={future.length} upcoming />
+        <div className="columns-1 gap-x-2.5 sm:columns-2">
+          {future.map((s) => (
+            <CompactCard
+              key={s.id}
+              show={s}
+              hue={hueOf(s)}
+              tilt={tiltOf(s)}
+              until={untilLabel(s.show_date, today)}
+            />
+          ))}
+        </div>
+      </section>
     );
-    for (const s of future) {
-      const hue = attendeeColor(s) ?? HUES[gi % HUES.length];
-      items.push(
-        <Row key={s.id} show={s} hue={hue} side={gi % 2 === 1} until={untilLabel(s.show_date, today)} />
-      );
-      gi += 1;
-    }
   }
 
   return (
@@ -330,6 +444,19 @@ export default function TimelineView({
       ) : (
         <AppNav active="timeline" handle={handle} />
       )}
+
+      {/* Floating "current year" chip — wayfinding while scrolling long runs */}
+      {spot && !capturing && ordered.length > 6 && (
+        <div className="pointer-events-none fixed right-4 top-20 z-30 flex items-baseline gap-1.5 rounded-full border border-line bg-surface/90 px-3 py-1.5 shadow-lg backdrop-blur">
+          <b className="text-sm font-extrabold tabular-nums text-ink">
+            {spot.year}
+          </b>
+          <span className="text-[10px] font-semibold text-ink-3">
+            {spot.count} show{spot.count === 1 ? "" : "s"}
+          </span>
+        </div>
+      )}
+
       <div className="mx-auto max-w-3xl px-4 py-8 pb-24 sm:px-6 md:pb-10">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -421,23 +548,20 @@ export default function TimelineView({
         ) : (
           <div
             ref={captureRef}
-            className={`rounded-2xl border border-line bg-surface p-5 sm:p-6 ${
+            className={`rounded-2xl border border-line bg-ground p-4 sm:p-6 ${
               capturing ? "tl-capture" : ""
             }`}
           >
-            <div className="mb-2 flex items-center gap-2">
+            <div className="mb-1 flex items-center gap-2">
               <BrandMark className="h-7 w-7" />
               <span className="text-sm font-semibold text-ink-2">
                 @{handle}&apos;s concert timeline
               </span>
             </div>
 
-            <div className="relative">
-              <div
-                className="pointer-events-none absolute bottom-3 top-3 left-[22px] w-[3px] -translate-x-1/2 rounded-full md:left-1/2"
-                style={{ background: "linear-gradient(180deg,#6366f1,#ec4899)" }}
-              />
-              {items}
+            {/* The spine: a dashed rail every year block hangs from */}
+            <div className="relative ml-1.5 border-l border-dashed border-line pl-6 sm:ml-2.5 sm:pl-8">
+              {sections}
             </div>
 
             <div className="mt-4 text-right text-[11px] text-ink-3">
