@@ -214,7 +214,7 @@ async function spotifyFetch<T>(
       throw new Error("Your Spotify session expired — please connect again.");
     }
     if (res.status === 403) {
-      const isWrite = op === "creating the playlist" || op === "adding songs";
+      const isWrite = op.startsWith("creating the playlist") || op === "adding songs";
       const said = detail ? `Spotify said "${detail}" (403)` : "Spotify said 403 (Forbidden)";
       const advice = isWrite
         ? " Click Reconnect below and approve the playlist permission on Spotify's screen."
@@ -279,6 +279,11 @@ export async function createSetlistPlaylist(
     undefined,
     "checking your account"
   );
+  if (!me.id) {
+    throw new Error(
+      "Spotify didn't return your account id. Please Reconnect below."
+    );
+  }
 
   // Resolve track URIs with a small concurrency pool (setlists are 10–30 songs).
   const uris: (string | null)[] = new Array(songs.length).fill(null);
@@ -323,7 +328,7 @@ export async function createSetlistPlaylist(
         public: false,
       }),
     },
-    "creating the playlist"
+    `creating the playlist (account ${me.id})`
   );
 
   // Add tracks in order (chunks of 100, though setlists never reach it).
