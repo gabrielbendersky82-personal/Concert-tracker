@@ -7,7 +7,13 @@ import type { Show } from "./types";
  * refresh. Everything here is browser-only; call from client components.
  */
 
-const CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID ?? "";
+// The Client ID is public by design — this uses PKCE, so there is no secret,
+// and the real security boundary is the redirect-URI allowlist on the Spotify
+// app. Baked in so the feature works without extra env config; override with
+// NEXT_PUBLIC_SPOTIFY_CLIENT_ID to point at a different Spotify app.
+const CLIENT_ID =
+  process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID ??
+  "54455ade6207484b84f601812fca118c";
 const SCOPE = "playlist-modify-private";
 const AUTH_URL = "https://accounts.spotify.com/authorize";
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
