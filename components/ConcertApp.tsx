@@ -159,8 +159,7 @@ export default function ConcertApp({
     setSheetOpen(true);
   }, []);
 
-  // Reopen a show when returning from the Spotify consent redirect
-  // (…/spotify/callback → back here with ?show=<id>). Runs once on mount.
+  // Deep-link support: ?show=<id> opens that show's detail on load. Runs once.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const showId = params.get("show");

@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  beginSpotifyAuth,
-  createSetlistPlaylist,
-  disconnectSpotify,
-  isSpotifyConfigured,
-  isSpotifyConnected,
-  type PlaylistResult,
-} from "@/lib/spotify";
+import { useState } from "react";
 import type { Show } from "@/lib/types";
 
 const GREEN = "#1db954";
+
+/** open.spotify.com search deep link — opens the Spotify app (or web), no auth. */
+export function spotifySearchUrl(query: string): string {
+  return `https://open.spotify.com/search/${encodeURIComponent(query)}`;
+}
 
 function SpotifyLogo({ className }: { className?: string }) {
   return (
@@ -21,148 +18,57 @@ function SpotifyLogo({ className }: { className?: string }) {
   );
 }
 
-type State = "idle" | "building" | "done" | "error";
-
+/**
+ * "Listen on Spotify" — deep-links into Spotify with no login and no Web API,
+ * so it works for everyone (including the demo) and can never be rate-limited
+ * or blocked. Opens the artist, copies the setlist for a manual playlist, and
+ * every setlist song is individually tappable (rendered in ShowDetail).
+ */
 export default function SpotifyPlaylist({ show }: { show: Show }) {
-  const [connected, setConnected] = useState(false);
-  const [state, setState] = useState<State>("idle");
-  const [progress, setProgress] = useState({ done: 0, total: 0 });
-  const [result, setResult] = useState<PlaylistResult | null>(null);
-  const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+  if (show.setlist_songs.length === 0) return null;
 
-  // localStorage read must run client-side after mount.
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setConnected(isSpotifyConnected());
-  }, []);
+  const songs = [...show.setlist_songs].sort((a, b) => a.position - b.position);
 
-  // Hidden entirely unless a Client ID is configured and there's a setlist.
-  if (!isSpotifyConfigured() || show.setlist_songs.length === 0) return null;
-
-  async function build() {
-    setState("building");
-    setProgress({ done: 0, total: show.setlist_songs.length });
+  async function copySetlist() {
+    const header = [show.artist, show.venue, show.city, show.show_date.slice(0, 4)]
+      .filter(Boolean)
+      .join(" · ");
+    const body = songs.map((s, i) => `${i + 1}. ${s.title}`).join("\n");
     try {
-      const r = await createSetlistPlaylist(show, (done, total) =>
-        setProgress({ done, total })
-      );
-      setResult(r);
-      setState("done");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong.");
-      setState("error");
+      await navigator.clipboard.writeText(`${header}\n\n${body}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard blocked — no-op */
     }
-  }
-
-  function startAuth() {
-    // Return to this exact view with the show reopened after consent.
-    const url = new URL(window.location.href);
-    url.searchParams.set("show", show.id);
-    beginSpotifyAuth(url.pathname + url.search + url.hash);
-  }
-
-  function handleClick() {
-    if (!connected) {
-      startAuth();
-      return;
-    }
-    build();
-  }
-
-  /** Clear the cached token and immediately re-run consent (to switch account). */
-  function reconnect() {
-    disconnectSpotify();
-    setConnected(false);
-    startAuth();
-  }
-
-  function disconnect() {
-    disconnectSpotify();
-    setConnected(false);
-    setState("idle");
-    setError("");
-  }
-
-  if (state === "done" && result) {
-    return (
-      <div className="mt-4 rounded-lg border border-line bg-raised p-3">
-        <div className="flex items-center gap-2">
-          <SpotifyLogo className="h-4 w-4" />
-          <p className="text-sm font-semibold text-ink">Playlist created</p>
-        </div>
-        <p className="mt-1 text-xs text-ink-2">
-          Added {result.found} of {result.total} songs
-          {result.missed.length > 0 && " — a few weren't on Spotify"}.
-        </p>
-        {result.missed.length > 0 && (
-          <details className="mt-1.5">
-            <summary className="cursor-pointer text-xs text-ink-3">
-              Show {result.missed.length} not found
-            </summary>
-            <ul className="mt-1 space-y-0.5 pl-3 text-xs text-ink-3">
-              {result.missed.map((t) => (
-                <li key={t} className="list-disc">
-                  {t}
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-        <a
-          href={result.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-2.5 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold text-black transition hover:opacity-90"
-          style={{ background: GREEN }}
-        >
-          <SpotifyLogo className="h-4 w-4" />
-          Open in Spotify
-        </a>
-      </div>
-    );
   }
 
   return (
     <div className="mt-4">
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={state === "building"}
-        className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-black transition hover:opacity-90 disabled:opacity-70"
-        style={{ background: GREEN }}
-      >
-        <SpotifyLogo className="h-4 w-4" />
-        {state === "building"
-          ? `Building… ${progress.done}/${progress.total}`
-          : "Relive on Spotify"}
-      </button>
-      {!connected && (
-        <p className="mt-1.5 text-xs text-ink-3">
-          Turn this setlist into a Spotify playlist. You&apos;ll connect your
-          account once.
-        </p>
-      )}
-      {state === "error" && (
-        <div className="mt-1.5 space-y-1.5">
-          <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
-          <button
-            type="button"
-            onClick={reconnect}
-            className="text-xs font-semibold text-accent underline underline-offset-2 transition hover:opacity-80"
-          >
-            Reconnect with a different account
-          </button>
-        </div>
-      )}
-      {connected && state === "idle" && (
+      <div className="flex flex-wrap items-center gap-2">
+        <a
+          href={spotifySearchUrl(show.artist)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-black transition hover:opacity-90"
+          style={{ background: GREEN }}
+        >
+          <SpotifyLogo className="h-4 w-4" />
+          Open on Spotify
+        </a>
         <button
           type="button"
-          onClick={disconnect}
-          className="mt-1.5 block text-xs text-ink-3 underline underline-offset-2 transition hover:text-ink-2"
+          onClick={copySetlist}
+          className="rounded-full border border-line-2 px-4 py-2 text-sm font-medium text-ink-2 transition hover:bg-raised"
         >
-          Disconnect Spotify
+          {copied ? "Copied ✓" : "Copy setlist"}
         </button>
-      )}
+      </div>
+      <p className="mt-1.5 text-xs text-ink-3">
+        Opens the artist in Spotify. Copy the setlist to paste into a new
+        playlist, or tap any song above to play it.
+      </p>
     </div>
   );
 }

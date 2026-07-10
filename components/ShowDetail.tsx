@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import ShowMediaGallery from "./ShowMediaGallery";
-import SpotifyPlaylist from "./SpotifyPlaylist";
+import SpotifyPlaylist, { spotifySearchUrl } from "./SpotifyPlaylist";
 import type { Show, ShowMedia } from "@/lib/types";
 
 function formatDate(iso: string): string {
@@ -133,9 +133,17 @@ export default function ShowDetail({
                   <span className="w-5 shrink-0 text-right tabular-nums text-ink-3">
                     {song.position}
                   </span>
-                  <span className={isFavorite ? "font-semibold text-ink" : ""}>
+                  <a
+                    href={spotifySearchUrl(`${song.title} ${show.artist}`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Play on Spotify"
+                    className={`hover:text-ink hover:underline ${
+                      isFavorite ? "font-semibold text-ink" : ""
+                    }`}
+                  >
                     {song.title}
-                  </span>
+                  </a>
                   {onFavorite ? (
                     <button
                       type="button"
