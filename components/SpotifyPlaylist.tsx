@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   beginSpotifyAuth,
   createSetlistPlaylist,
+  disconnectSpotify,
   isSpotifyConfigured,
   isSpotifyConnected,
   type PlaylistResult,
@@ -53,15 +54,33 @@ export default function SpotifyPlaylist({ show }: { show: Show }) {
     }
   }
 
+  function startAuth() {
+    // Return to this exact view with the show reopened after consent.
+    const url = new URL(window.location.href);
+    url.searchParams.set("show", show.id);
+    beginSpotifyAuth(url.pathname + url.search + url.hash);
+  }
+
   function handleClick() {
     if (!connected) {
-      // Return to this exact view with the show reopened after consent.
-      const url = new URL(window.location.href);
-      url.searchParams.set("show", show.id);
-      beginSpotifyAuth(url.pathname + url.search + url.hash);
+      startAuth();
       return;
     }
     build();
+  }
+
+  /** Clear the cached token and immediately re-run consent (to switch account). */
+  function reconnect() {
+    disconnectSpotify();
+    setConnected(false);
+    startAuth();
+  }
+
+  function disconnect() {
+    disconnectSpotify();
+    setConnected(false);
+    setState("idle");
+    setError("");
   }
 
   if (state === "done" && result) {
@@ -124,7 +143,25 @@ export default function SpotifyPlaylist({ show }: { show: Show }) {
         </p>
       )}
       {state === "error" && (
-        <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{error}</p>
+        <div className="mt-1.5 space-y-1.5">
+          <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
+          <button
+            type="button"
+            onClick={reconnect}
+            className="text-xs font-semibold text-accent underline underline-offset-2 transition hover:opacity-80"
+          >
+            Reconnect with a different account
+          </button>
+        </div>
+      )}
+      {connected && state === "idle" && (
+        <button
+          type="button"
+          onClick={disconnect}
+          className="mt-1.5 block text-xs text-ink-3 underline underline-offset-2 transition hover:text-ink-2"
+        >
+          Disconnect Spotify
+        </button>
       )}
     </div>
   );
