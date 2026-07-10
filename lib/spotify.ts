@@ -110,6 +110,10 @@ export async function beginSpotifyAuth(returnTo: string): Promise<void> {
     code_challenge_method: "S256",
     code_challenge: await challengeFrom(verifier),
     scope: SCOPE,
+    // Always show the account/consent dialog so a user can see which Spotify
+    // account they're authorizing and switch it (needed to fix a wrong-account
+    // connection). Without this, Spotify silently reuses the browser session.
+    show_dialog: "true",
   });
   window.location.href = `${AUTH_URL}?${params.toString()}`;
 }
