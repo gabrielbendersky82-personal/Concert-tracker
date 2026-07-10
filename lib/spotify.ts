@@ -14,7 +14,7 @@ import type { Show } from "./types";
 const CLIENT_ID =
   process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID ??
   "54455ade6207484b84f601812fca118c";
-const SCOPE = "playlist-modify-private";
+const SCOPE = "playlist-modify-private playlist-modify-public";
 const AUTH_URL = "https://accounts.spotify.com/authorize";
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 const API = "https://api.spotify.com/v1";
@@ -214,9 +214,12 @@ async function spotifyFetch<T>(
       throw new Error("Your Spotify session expired — please connect again.");
     }
     if (res.status === 403) {
-      throw new Error(
-        `Spotify said 403 (Forbidden) while ${op}. This account isn't authorized to use the app — add the exact email shown on Spotify's login screen under the app's User Management (Development mode).`
-      );
+      const isWrite = op === "creating the playlist" || op === "adding songs";
+      const said = detail ? `Spotify said "${detail}" (403)` : "Spotify said 403 (Forbidden)";
+      const advice = isWrite
+        ? " Click Reconnect below and approve the playlist permission on Spotify's screen."
+        : " This account isn't authorized for the app — add the email from Spotify's login screen under the app's User Management (Development mode).";
+      throw new Error(`${said} while ${op}.${advice}`);
     }
     throw new Error(
       detail
