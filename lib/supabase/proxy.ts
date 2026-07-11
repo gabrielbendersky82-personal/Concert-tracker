@@ -48,6 +48,9 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/about") ||
     pathname.startsWith("/u/") ||
     pathname.startsWith("/api/artist-image") ||
+    // The demo's add-show flow needs geocoding + setlist.fm search.
+    pathname.startsWith("/api/geocode") ||
+    pathname.startsWith("/api/setlistfm") ||
     // PWA assets must load for logged-out visitors or install breaks.
     pathname === "/manifest.webmanifest" ||
     pathname === "/sw.js";

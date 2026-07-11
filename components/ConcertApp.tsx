@@ -11,12 +11,18 @@ import {
 } from "@/lib/shows";
 import { addShowVideo, deleteShowMedia, uploadShowPhoto } from "@/lib/media";
 import { loadMineAndFriends } from "@/lib/social";
+import {
+  addDemoLocalShow,
+  deleteDemoLocalShow,
+  isDemoLocalId,
+  loadDemoLocalShows,
+} from "@/lib/demoLocal";
 import { matchesQuery } from "@/lib/searchShows";
 import { onThisDay } from "@/lib/memories";
 import { nextUpcoming, untilLabel } from "@/lib/upcoming";
 import { createClient } from "@/lib/supabase/client";
 import { SAMPLE_SHOWS } from "@/lib/sampleShows";
-import type { Show, ShowMedia } from "@/lib/types";
+import type { NewShowInput, Show, ShowMedia } from "@/lib/types";
 import type { Attendee } from "@/lib/demoShows";
 import FriendsToggle from "./FriendsToggle";
 import BrandMark from "./BrandMark";
@@ -83,9 +89,9 @@ export default function ConcertApp({
   const [seeding, setSeeding] = useState(false);
   const [memoryDismissed, setMemoryDismissed] = useState(false);
 
-  const visibleTabs = readOnly
-    ? TABS.filter((t) => t.id === "shows" || t.id === "stats")
-    : TABS;
+  // Demo keeps the full add flow (it's the core of the product) — only the
+  // backup/import tab needs an account.
+  const visibleTabs = readOnly ? TABS.filter((t) => t.id !== "data") : TABS;
 
   const hasFriends = attendees.length > 1;
   // Show only my shows when the toggle is off; otherwise everyone's.
@@ -136,11 +142,21 @@ export default function ConcertApp({
   }, []);
 
   useEffect(() => {
-    // Read-only demo renders provided shows; skip the authenticated fetch.
-    if (readOnly) return;
+    if (readOnly) {
+      // Demo: merge in any shows this visitor added earlier (localStorage).
+      const local = loadDemoLocalShows();
+      if (local.length > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setShows((prev) => [
+          ...local.filter((l) => !prev.some((p) => p.id === l.id)),
+          ...prev,
+        ]);
+      }
+      return;
+    }
     // Fetch the user's shows on mount. State only updates after the awaited
     // fetch resolves, so this is a genuine external-sync effect.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     load();
   }, [load, readOnly]);
 
@@ -152,6 +168,9 @@ export default function ConcertApp({
   // would fail RLS). Backups also export just my shows.
   const canEditSelected =
     !readOnly && !!selectedShow && (!myId || selectedShow.user_id === myId);
+  // Demo visitors can delete the shows they added themselves.
+  const canDeleteSelected =
+    canEditSelected || (!!selectedShow && isDemoLocalId(selectedShow.id));
   const myShows = myId ? shows.filter((s) => s.user_id === myId) : shows;
 
   const handleSelect = useCallback((id: string) => {
@@ -178,11 +197,28 @@ export default function ConcertApp({
   }, []);
 
   async function handleCreated() {
+    if (readOnly) return; // demo selection happens in saveDemoShow
     await load();
     setTab("shows");
   }
 
+  // Demo saves: persist to this browser and jump straight to the new pin.
+  async function saveDemoShow(input: NewShowInput): Promise<string> {
+    const show = addDemoLocalShow(input);
+    setShows((prev) => [show, ...prev]);
+    setSelectedId(show.id);
+    setSheetOpen(true);
+    return show.id;
+  }
+
   async function handleDelete(id: string) {
+    if (readOnly) {
+      // Only this visitor's own locally added shows are deletable in demo.
+      deleteDemoLocalShow(id);
+      setShows((prev) => prev.filter((s) => s.id !== id));
+      setSelectedId(null);
+      return;
+    }
     try {
       await deleteShow(id);
       setSelectedId(null);
@@ -470,7 +506,7 @@ export default function ConcertApp({
             <ShowDetail
               show={selectedShow}
               onClose={() => setSelectedId(null)}
-              onDelete={canEditSelected ? handleDelete : undefined}
+              onDelete={canDeleteSelected ? handleDelete : undefined}
               onAddPhotos={canEditSelected ? handleAddPhotos : undefined}
               onAddVideo={canEditSelected ? handleAddVideo : undefined}
               onDeleteMedia={canEditSelected ? handleDeleteMedia : undefined}
@@ -507,7 +543,26 @@ export default function ConcertApp({
                 </p>
               )}
 
-              {tab === "add" && <AddShowForm onCreated={handleCreated} />}
+              {tab === "add" && (
+                <>
+                  {readOnly && (
+                    <p className="mb-3 rounded-lg bg-accent/10 p-2 text-xs text-ink-2">
+                      <span className="font-semibold text-accent">
+                        Demo mode
+                      </span>{" "}
+                      — shows you add are saved in this browser only.{" "}
+                      <Link href="/login" className="underline">
+                        Sign in
+                      </Link>{" "}
+                      to build your real map.
+                    </p>
+                  )}
+                  <AddShowForm
+                    onCreated={handleCreated}
+                    saveShow={readOnly ? saveDemoShow : undefined}
+                  />
+                </>
+              )}
 
               {tab === "shows" && (
                 <ShowsList

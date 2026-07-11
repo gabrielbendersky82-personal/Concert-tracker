@@ -9,6 +9,7 @@ import {
   type SetlistFmResult,
 } from "@/lib/shows";
 import { addShowVideo, uploadShowPhoto } from "@/lib/media";
+import type { NewShowInput } from "@/lib/types";
 
 const inputClass =
   "w-full rounded-lg border border-line-2 bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-3 outline-none focus:border-accent focus:ring-2 focus:ring-accent/25";
@@ -28,9 +29,15 @@ const METHODS: {
 
 export default function AddShowForm({
   onCreated,
+  saveShow,
 }: {
   onCreated: () => void | Promise<void>;
+  /** Override where the show is saved (demo mode persists to the browser
+   *  instead of Supabase). When set, the photo/video fields are hidden —
+   *  media needs a signed-in account. */
+  saveShow?: (input: NewShowInput) => Promise<string>;
 }) {
+  const mediaEnabled = !saveShow;
   const [artist, setArtist] = useState("");
   const [venue, setVenue] = useState("");
   const [city, setCity] = useState("");
@@ -192,7 +199,7 @@ export default function AddShowForm({
         }
       }
 
-      const showId = await createShow({
+      const showId = await (saveShow ?? createShow)({
         artist,
         venue,
         city,
@@ -206,16 +213,19 @@ export default function AddShowForm({
 
       // Attach any photos / videos to the new show (best-effort: the show is
       // already saved, so a media hiccup shouldn't block the success flow).
-      try {
-        for (const file of photos) await uploadShowPhoto(showId, file);
-        for (const link of videoLinks
-          .split("\n")
-          .map((s) => s.trim())
-          .filter(Boolean)) {
-          await addShowVideo(showId, link);
+      // Skipped for demo saves — uploads need a signed-in account.
+      if (mediaEnabled) {
+        try {
+          for (const file of photos) await uploadShowPhoto(showId, file);
+          for (const link of videoLinks
+            .split("\n")
+            .map((s) => s.trim())
+            .filter(Boolean)) {
+            await addShowVideo(showId, link);
+          }
+        } catch {
+          /* media is optional; ignore individual failures */
         }
-      } catch {
-        /* media is optional; ignore individual failures */
       }
 
       reset();
@@ -476,6 +486,13 @@ export default function AddShowForm({
             />
           </div>
 
+          {!mediaEnabled && (
+            <p className="text-xs text-ink-3">
+              Sign in to attach photos and videos to your shows.
+            </p>
+          )}
+
+          {mediaEnabled && (
           <div>
             <label className={labelClass}>
               Photos{" "}
@@ -502,7 +519,9 @@ export default function AddShowForm({
               </div>
             )}
           </div>
+          )}
 
+          {mediaEnabled && (
           <div>
             <label className={labelClass} htmlFor="videos">
               YouTube videos{" "}
@@ -516,6 +535,7 @@ export default function AddShowForm({
               placeholder={"https://youtu.be/…"}
             />
           </div>
+          )}
 
           {error && (
             <p className="text-sm text-red-600 dark:text-red-400" role="alert">
