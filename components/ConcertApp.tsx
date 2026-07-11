@@ -276,7 +276,7 @@ export default function ConcertApp({
 
       {/* Mobile bottom tab bar (sits below the sheet) */}
       {readOnly ? (
-        <nav className="absolute inset-x-0 bottom-0 z-40 flex border-t border-line bg-surface/95 backdrop-blur md:hidden">
+        <nav className="absolute inset-x-0 bottom-0 z-[1100] flex border-t border-line bg-surface/95 backdrop-blur md:hidden">
           {DEMO_NAV.map((s) => {
             const on = s.id === "map";
             return (

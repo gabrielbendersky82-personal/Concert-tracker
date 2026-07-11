@@ -120,7 +120,7 @@ export function BottomTabs({
     <nav
       className={`${
         position === "fixed" ? "fixed" : "absolute"
-      } inset-x-0 bottom-0 z-40 flex border-t border-line bg-surface/95 backdrop-blur md:hidden`}
+      } inset-x-0 bottom-0 z-[1100] flex border-t border-line bg-surface/95 backdrop-blur md:hidden`}
     >
       {SECTIONS.map((s) => {
         const on = s.id === active;
