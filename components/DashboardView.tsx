@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { computeDashboard } from "@/lib/stats";
+import { wrappedYears } from "@/lib/wrapped";
 import type { Show } from "@/lib/types";
 import type { Attendee } from "@/lib/demoShows";
 import AppNav from "./AppNav";
@@ -86,6 +87,30 @@ export default function DashboardView({
             <FriendsToggle value={showFriends} onChange={setShowFriends} />
           )}
         </div>
+
+        {(() => {
+          // Wrapped banner: personal shows only (Wrapped ignores friends).
+          const mine = myId ? shows.filter((s) => s.user_id === myId) : shows;
+          const latest = wrappedYears(mine)[0];
+          if (!latest) return null;
+          return (
+            <Link
+              href={guest ? "/demo/wrapped" : "/wrapped"}
+              className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-accent/40 bg-accent/10 px-4 py-3 transition hover:bg-accent/15"
+            >
+              <span className="flex items-center gap-2.5">
+                <span aria-hidden className="text-lg">✨</span>
+                <span className="text-sm font-semibold text-ink">
+                  Your {latest} Wrapped is ready
+                  <span className="ml-2 hidden font-normal text-ink-2 sm:inline">
+                    — your year in live music, as a story
+                  </span>
+                </span>
+              </span>
+              <span aria-hidden className="text-accent">→</span>
+            </Link>
+          );
+        })()}
 
         {empty ? (
           <div className="rounded-2xl border border-line bg-surface p-10 text-center">

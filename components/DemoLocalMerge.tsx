@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import TimelineView from "./TimelineView";
 import DashboardView from "./DashboardView";
+import WrappedStory from "./WrappedStory";
 import { loadDemoLocalShows } from "@/lib/demoLocal";
 import { DEMO_HANDLE, DEMO_PEOPLE, DEMO_SHOWS } from "@/lib/demoShows";
 import type { Show } from "@/lib/types";
@@ -46,4 +47,11 @@ export function DemoDashboard() {
       myId="you"
     />
   );
+}
+
+export function DemoWrapped() {
+  // Wrapped is personal — the demo wraps the "you" persona's shows
+  // (curated history + anything this visitor added locally).
+  const shows = useDemoShows().filter((s) => s.user_id === "you");
+  return <WrappedStory shows={shows} handle={DEMO_HANDLE} guest />;
 }
