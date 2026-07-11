@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import TimelineView from "./TimelineView";
 import DashboardView from "./DashboardView";
 import WrappedStory from "./WrappedStory";
+import EntityView from "./EntityView";
 import { loadDemoLocalShows } from "@/lib/demoLocal";
 import { DEMO_HANDLE, DEMO_PEOPLE, DEMO_SHOWS } from "@/lib/demoShows";
 import type { Show } from "@/lib/types";
@@ -40,6 +41,26 @@ export function DemoTimeline() {
 export function DemoDashboard() {
   return (
     <DashboardView
+      shows={useDemoShows()}
+      handle={DEMO_HANDLE}
+      guest
+      attendees={DEMO_PEOPLE}
+      myId="you"
+    />
+  );
+}
+
+export function DemoEntity({
+  kind,
+  name,
+}: {
+  kind: "artist" | "venue";
+  name: string;
+}) {
+  return (
+    <EntityView
+      kind={kind}
+      name={name}
       shows={useDemoShows()}
       handle={DEMO_HANDLE}
       guest

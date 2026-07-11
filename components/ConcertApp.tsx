@@ -529,6 +529,7 @@ export default function ConcertApp({
               onDeleteMedia={canEditSelected ? handleDeleteMedia : undefined}
               onRate={canEditSelected ? handleRate : undefined}
               onFavorite={canEditSelected ? handleFavorite : undefined}
+              entityBase={readOnly ? "/demo" : ""}
             />
           </div>
         ) : (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import ShowMediaGallery from "./ShowMediaGallery";
 import SpotifyPlaylist, { spotifySearchUrl } from "./SpotifyPlaylist";
 import type { Show, ShowMedia } from "@/lib/types";
@@ -24,6 +25,7 @@ export default function ShowDetail({
   onDeleteMedia,
   onRate,
   onFavorite,
+  entityBase = "",
 }: {
   show: Show;
   onClose: () => void;
@@ -35,6 +37,8 @@ export default function ShowDetail({
   onRate?: (showId: string, rating: number | null) => Promise<void>;
   /** Owner-only: set/clear the song of the night. */
   onFavorite?: (showId: string, songId: string | null) => Promise<void>;
+  /** Route prefix for artist/venue pages ("" signed-in, "/demo" in the demo). */
+  entityBase?: string;
 }) {
   const media = show.show_media ?? [];
   const canEdit = !!onAddPhotos || !!onAddVideo;
@@ -77,9 +81,25 @@ export default function ShowDetail({
     <div className="flex h-full flex-col">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-ink">{show.artist}</h2>
+          <h2 className="text-lg font-semibold text-ink">
+            <Link
+              href={`${entityBase}/artist/${encodeURIComponent(show.artist)}`}
+              className="transition hover:text-accent hover:underline"
+              title={`Every time you've seen ${show.artist}`}
+            >
+              {show.artist}
+            </Link>
+          </h2>
           {show.venue && (
-            <p className="text-sm text-ink-2">{show.venue}</p>
+            <p className="text-sm text-ink-2">
+              <Link
+                href={`${entityBase}/venue/${encodeURIComponent(show.venue)}`}
+                className="transition hover:text-accent hover:underline"
+                title={`Every show at ${show.venue}`}
+              >
+                {show.venue}
+              </Link>
+            </p>
           )}
           <p className="text-sm text-ink-2">
             {[show.city, show.country].filter(Boolean).join(", ")}
