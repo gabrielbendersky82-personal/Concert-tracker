@@ -17,8 +17,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://my-concerts.click"),
   title: "Concert Map",
   description: "A personal map of every concert you've been to.",
+  openGraph: {
+    title: "Concert Map",
+    description: "A personal map of every concert you've been to.",
+    url: "/",
+    siteName: "Concert Map",
+    images: ["/og.png"],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Concert Map",
+    description: "A personal map of every concert you've been to.",
+    images: ["/og.png"],
+  },
 };
 
 export default function RootLayout({
