@@ -286,6 +286,23 @@ export default function ConcertApp({
           }}
         />
 
+        {/* Mobile: adding a show is the core action, so it gets an
+            always-visible button on the map — no need to discover the
+            panel tabs. Sits above the collapsed sheet, below the open one. */}
+        <button
+          onClick={() => {
+            setSelectedId(null);
+            setTab("add");
+            setSheetOpen(true);
+          }}
+          className="absolute bottom-32 right-4 z-[900] flex items-center gap-1.5 rounded-full bg-cta px-4 py-3 text-sm font-bold text-cta-ink shadow-xl shadow-black/30 transition hover:opacity-90 md:hidden"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Add show
+        </button>
+
         {!loading && visibleShows.length === 0 && (
           <div className="pointer-events-none absolute inset-0 z-[500] flex items-center justify-center p-6">
             <div className="pointer-events-auto max-w-xs rounded-2xl border border-line bg-surface/95 p-5 text-center shadow-lg backdrop-blur">
