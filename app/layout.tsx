@@ -1,10 +1,14 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 // Runs before paint: stamps the resolved theme (stored choice, else OS
 // preference) on <html> so the CSS token overrides apply with no flash.
 const THEME_SCRIPT = `(function(){try{var s=localStorage.getItem("theme");var t=(s==="light"||s==="dark")?s:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=t;}catch(e){}})();`;
+
+// Registers the (pass-through, cache-nothing) service worker that makes the
+// site installable as a PWA. Registration failure is silently ignored.
+const SW_SCRIPT = `if("serviceWorker" in navigator){addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})}`;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +38,18 @@ export const metadata: Metadata = {
     description: "A personal map of every concert you've been to.",
     images: ["/og.png"],
   },
+  appleWebApp: {
+    capable: true,
+    title: "Concert Map",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#15151c" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+  ],
 };
 
 export default function RootLayout({
@@ -50,6 +66,7 @@ export default function RootLayout({
       <head>
         {/* Stamp the resolved theme before paint to avoid a flash */}
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: SW_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

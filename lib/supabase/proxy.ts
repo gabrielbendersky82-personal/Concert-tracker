@@ -47,7 +47,10 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/demo") ||
     pathname.startsWith("/about") ||
     pathname.startsWith("/u/") ||
-    pathname.startsWith("/api/artist-image");
+    pathname.startsWith("/api/artist-image") ||
+    // PWA assets must load for logged-out visitors or install breaks.
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/sw.js";
 
   if (!user && !isPublic) {
     const redirectUrl = request.nextUrl.clone();
