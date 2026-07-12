@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   createShow,
   geocode,
@@ -9,13 +9,14 @@ import {
   type SetlistFmResult,
 } from "@/lib/shows";
 import { addShowVideo, uploadShowPhoto } from "@/lib/media";
+import { scanTicket } from "@/lib/ticketScan";
 import type { NewShowInput } from "@/lib/types";
 
 const inputClass =
   "w-full rounded-lg border border-line-2 bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-3 outline-none focus:border-accent focus:ring-2 focus:ring-accent/25";
 const labelClass = "mb-1 block text-xs font-medium text-ink-2";
 
-type Mode = "search" | "url" | "manual";
+type Mode = "search" | "scan" | "url" | "manual";
 
 const METHODS: {
   id: Mode;
@@ -23,7 +24,8 @@ const METHODS: {
   icon: (props: { className?: string }) => React.ReactElement;
 }[] = [
   { id: "search", label: "Search", icon: SearchIcon },
-  { id: "url", label: "Paste link", icon: LinkIcon },
+  { id: "scan", label: "Scan", icon: TicketIcon },
+  { id: "url", label: "Link", icon: LinkIcon },
   { id: "manual", label: "Manual", icon: PencilIcon },
 ];
 
@@ -66,6 +68,9 @@ export default function AddShowForm({
   const [sYear, setSYear] = useState("");
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SetlistFmResult[] | null>(null);
+  // ticket photo scan
+  const scanInputRef = useRef<HTMLInputElement>(null);
+  const [scanning, setScanning] = useState(false);
   // Coordinates supplied by setlist.fm, so we can skip geocoding on save.
   const [importedCoords, setImportedCoords] = useState<
     { lat: number; lon: number } | null
@@ -136,6 +141,34 @@ export default function AddShowForm({
     setImportNote(
       `Loaded ${r.artist}${r.songCount ? ` · ${r.songCount} songs` : ""}. Review and save.`
     );
+  }
+
+  async function handleScan(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setScanning(true);
+    setError("");
+    setImportNote("");
+    try {
+      const r = await scanTicket(file);
+      setArtist(r.artist);
+      if (r.venue) setVenue(r.venue);
+      if (r.city) setCity(r.city);
+      if (r.country) setCountry(r.country);
+      if (r.date) setDate(r.date);
+      setImportedCoords(null);
+      setHasDraft(true);
+      setImportNote(
+        `Read your ticket${r.artist ? `: ${r.artist}` : ""}.${
+          r.note ? ` ${r.note}` : ""
+        } Review and save.`
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't scan that ticket.");
+    } finally {
+      setScanning(false);
+    }
   }
 
   async function handleImport() {
@@ -239,9 +272,15 @@ export default function AddShowForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      {/* Method selector — pick how to add this show. */}
-      <div className="grid grid-cols-3 gap-1 rounded-xl border border-line bg-raised p-1">
-        {METHODS.map(({ id, label, icon: Icon }) => {
+      {/* Method selector — pick how to add this show. Ticket scanning needs a
+          signed-in account (each scan calls a paid vision API). */}
+      <div
+        className={`grid ${
+          mediaEnabled ? "grid-cols-4" : "grid-cols-3"
+        } gap-1 rounded-xl border border-line bg-raised p-1`}
+      >
+        {(mediaEnabled ? METHODS : METHODS.filter((m) => m.id !== "scan")).map(
+          ({ id, label, icon: Icon }) => {
           const active = mode === id;
           return (
             <button
@@ -259,7 +298,8 @@ export default function AddShowForm({
               {label}
             </button>
           );
-        })}
+          }
+        )}
       </div>
 
       {/* Source input for the selected method (hidden in manual mode). */}
@@ -333,6 +373,31 @@ export default function AddShowForm({
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {mode === "scan" && (
+        <div className="space-y-1.5">
+          <input
+            ref={scanInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleScan}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => scanInputRef.current?.click()}
+            disabled={scanning}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-line-2 bg-surface px-3 py-6 text-sm font-medium text-ink-2 transition hover:border-accent/50 hover:text-ink disabled:opacity-60"
+          >
+            <TicketIcon className="h-5 w-5" />
+            {scanning ? "Reading your ticket…" : "Photograph or upload a ticket"}
+          </button>
+          <p className="text-xs text-ink-3">
+            Works with old paper stubs and QR e-tickets. We&apos;ll read the
+            artist, venue and date so you can review and save.
+          </p>
         </div>
       )}
 
@@ -598,6 +663,26 @@ function LinkIcon({ className }: { className?: string }) {
     >
       <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5" />
       <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5" />
+    </svg>
+  );
+}
+
+function TicketIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+      <path d="M13 5v2" />
+      <path d="M13 17v2" />
+      <path d="M13 11v2" />
     </svg>
   );
 }
