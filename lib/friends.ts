@@ -124,3 +124,30 @@ export async function removeFriendship(id: string): Promise<void> {
   const { error } = await supabase.from("friendships").delete().eq("id", id);
   if (error) throw error;
 }
+
+/** Tag a friend as having attended one of your shows (Friends v2). */
+export async function tagAttendee(
+  showId: string,
+  friendId: string
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("show_attendees")
+    .insert({ show_id: showId, friend_id: friendId });
+  // Ignore a duplicate (already tagged) so the toggle is idempotent.
+  if (error && error.code !== "23505") throw error;
+}
+
+/** Remove a friend's attendance tag from one of your shows. */
+export async function untagAttendee(
+  showId: string,
+  friendId: string
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("show_attendees")
+    .delete()
+    .eq("show_id", showId)
+    .eq("friend_id", friendId);
+  if (error) throw error;
+}

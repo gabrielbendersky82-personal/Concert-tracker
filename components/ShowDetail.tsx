@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import ShowMediaGallery from "./ShowMediaGallery";
 import SpotifyPlaylist, { spotifySearchUrl } from "./SpotifyPlaylist";
-import type { Show, ShowMedia } from "@/lib/types";
+import { attendeeName, type Show, type ShowMedia } from "@/lib/types";
 
 function formatDate(iso: string): string {
   const d = new Date(iso + "T00:00:00");
@@ -25,6 +25,9 @@ export default function ShowDetail({
   onDeleteMedia,
   onRate,
   onFavorite,
+  taggableFriends,
+  onTagFriend,
+  onUntagFriend,
   entityBase = "",
 }: {
   show: Show;
@@ -37,6 +40,11 @@ export default function ShowDetail({
   onRate?: (showId: string, rating: number | null) => Promise<void>;
   /** Owner-only: set/clear the song of the night. */
   onFavorite?: (showId: string, songId: string | null) => Promise<void>;
+  /** Owner-only: accepted friends offered in the "who was with you" picker. */
+  taggableFriends?: { id: string; label: string }[];
+  /** Owner-only: tag/untag a friend as also attending this show. */
+  onTagFriend?: (showId: string, friendId: string) => Promise<void>;
+  onUntagFriend?: (showId: string, friendId: string) => Promise<void>;
   /** Route prefix for artist/venue pages ("" signed-in, "/demo" in the demo). */
   entityBase?: string;
 }) {
@@ -133,6 +141,13 @@ export default function ShowDetail({
           {show.notes}
         </p>
       )}
+
+      <Attendees
+        show={show}
+        taggableFriends={onTagFriend ? taggableFriends : undefined}
+        onTag={onTagFriend ? (fid) => onTagFriend(show.id, fid) : undefined}
+        onUntag={onUntagFriend ? (fid) => onUntagFriend(show.id, fid) : undefined}
+      />
 
       <div className="mt-4 flex-1 overflow-y-auto">
         <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-3">
@@ -266,6 +281,82 @@ export default function ShowDetail({
         >
           Delete show
         </button>
+      )}
+    </div>
+  );
+}
+
+/** "Went with …" for everyone; an owner also gets a chip picker of their
+ *  accepted friends to tag/untag who was there. Hidden when there's nothing
+ *  to show and no friends to offer. */
+function Attendees({
+  show,
+  taggableFriends,
+  onTag,
+  onUntag,
+}: {
+  show: Show;
+  taggableFriends?: { id: string; label: string }[];
+  onTag?: (friendId: string) => Promise<void>;
+  onUntag?: (friendId: string) => Promise<void>;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const attendees = show.show_attendees ?? [];
+  const taggedIds = new Set(attendees.map((a) => a.friend_id));
+  const canEdit = !!taggableFriends && taggableFriends.length > 0 && !!onTag;
+
+  if (attendees.length === 0 && !canEdit) return null;
+
+  async function toggle(friendId: string) {
+    if (busy) return;
+    setBusy(friendId);
+    try {
+      if (taggedIds.has(friendId)) await onUntag?.(friendId);
+      else await onTag?.(friendId);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="mt-3 space-y-2">
+      {attendees.length > 0 && (
+        <p className="text-sm text-ink-2">
+          <span className="text-ink-3">Went with </span>
+          <span className="font-medium text-ink">
+            {attendees.map((a) => attendeeName(a)).join(", ")}
+          </span>
+        </p>
+      )}
+
+      {canEdit && (
+        <div>
+          <p className="mb-1.5 text-xs font-medium text-ink-3">
+            Who was with you?
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {taggableFriends!.map((f) => {
+              const on = taggedIds.has(f.id);
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => toggle(f.id)}
+                  disabled={busy === f.id}
+                  aria-pressed={on}
+                  className={`rounded-full border px-2.5 py-1 text-xs font-medium transition disabled:opacity-50 ${
+                    on
+                      ? "border-accent/40 bg-accent/15 text-accent"
+                      : "border-line-2 text-ink-2 hover:bg-raised"
+                  }`}
+                >
+                  {on ? "✓ " : ""}
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );

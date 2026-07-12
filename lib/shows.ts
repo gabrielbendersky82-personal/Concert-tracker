@@ -4,23 +4,33 @@ import type { NewShowInput, Show } from "./types";
 // The setlist embed names its FK explicitly: since favorite_song_id (0005)
 // there are two relationships between shows and setlist_songs, and a bare
 // setlist_songs(*) embed is ambiguous to PostgREST.
-const SELECT_WITH_MEDIA =
-  "*, setlist_songs!setlist_songs_show_id_fkey(*), show_media(*)";
-const SELECT_NO_MEDIA = "*, setlist_songs!setlist_songs_show_id_fkey(*)";
+export const SEL_SONGS = "setlist_songs!setlist_songs_show_id_fkey(*)";
+export const SEL_MEDIA = "show_media(*)";
+export const SEL_ATTENDEES =
+  "show_attendees(friend_id, profiles(id, handle, display_name))";
+// Progressively-degrading selects: full → drop attendees (pre-0006) → drop
+// media (pre-0004). Keeps the app working before each migration is applied.
+const SELECT_TIERS = [
+  `*, ${SEL_SONGS}, ${SEL_MEDIA}, ${SEL_ATTENDEES}`,
+  `*, ${SEL_SONGS}, ${SEL_MEDIA}`,
+  `*, ${SEL_SONGS}`,
+];
 
 /**
- * Select shows, retrying without the `show_media` embed if that table isn't
- * present yet (migration 0004). Keeps the app working before the migration is
- * applied; media simply won't appear until then.
+ * Select shows, retrying with a leaner embed if a table isn't present yet
+ * (migrations 0006 attendees, 0004 media). Missing relations simply don't
+ * appear until their migration is applied.
  */
 async function selectShows(
   build: (select: string) => PromiseLike<{ data: unknown; error: unknown }>
 ): Promise<Show[]> {
-  let { data, error } = await build(SELECT_WITH_MEDIA);
-  if (error) {
-    ({ data, error } = await build(SELECT_NO_MEDIA));
-    if (error) throw error;
+  let data: unknown = null;
+  let error: unknown = null;
+  for (const select of SELECT_TIERS) {
+    ({ data, error } = await build(select));
+    if (!error) break;
   }
+  if (error) throw error;
   const rows = (data as Parameters<typeof sortShowRelations>[0][]) ?? [];
   return rows.map(sortShowRelations) as Show[];
 }

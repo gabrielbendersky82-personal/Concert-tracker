@@ -10,6 +10,7 @@ import {
   updateShowRating,
 } from "@/lib/shows";
 import { addShowVideo, deleteShowMedia, uploadShowPhoto } from "@/lib/media";
+import { tagAttendee, untagAttendee } from "@/lib/friends";
 import { loadMineAndFriends } from "@/lib/social";
 import {
   addDemoLocalShow,
@@ -122,6 +123,18 @@ export default function ConcertApp({
         return a ? { label: a.label, color: a.color } : null;
       }
     : undefined;
+
+  // Accepted friends (everyone in the attendee list except me) offered as tags
+  // for "who was with you" on a show. Empty in the demo (no real friend graph).
+  const taggableFriends = useMemo(
+    () =>
+      readOnly
+        ? []
+        : attendees
+            .filter((a) => a.id !== myId)
+            .map((a) => ({ id: a.id, label: a.label })),
+    [readOnly, attendees, myId]
+  );
 
   const load = useCallback(async () => {
     try {
@@ -250,6 +263,16 @@ export default function ConcertApp({
 
   async function handleFavorite(showId: string, songId: string | null) {
     await updateFavoriteSong(showId, songId);
+    await load();
+  }
+
+  async function handleTagFriend(showId: string, friendId: string) {
+    await tagAttendee(showId, friendId);
+    await load();
+  }
+
+  async function handleUntagFriend(showId: string, friendId: string) {
+    await untagAttendee(showId, friendId);
     await load();
   }
 
@@ -529,6 +552,9 @@ export default function ConcertApp({
               onDeleteMedia={canEditSelected ? handleDeleteMedia : undefined}
               onRate={canEditSelected ? handleRate : undefined}
               onFavorite={canEditSelected ? handleFavorite : undefined}
+              taggableFriends={canEditSelected ? taggableFriends : undefined}
+              onTagFriend={canEditSelected ? handleTagFriend : undefined}
+              onUntagFriend={canEditSelected ? handleUntagFriend : undefined}
               entityBase={readOnly ? "/demo" : ""}
             />
           </div>

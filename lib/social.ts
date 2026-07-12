@@ -1,14 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildAttendees } from "./attendees";
 import type { Attendee } from "./demoShows";
+import { SEL_ATTENDEES, SEL_MEDIA, SEL_SONGS } from "./shows";
 import type { Friendship, Profile, Show } from "./types";
 
-// The setlist embed names its FK explicitly: since favorite_song_id (0005)
-// there are two relationships between shows and setlist_songs, and a bare
-// setlist_songs(*) embed is ambiguous to PostgREST.
-const SELECT_WITH_MEDIA =
-  "*, setlist_songs!setlist_songs_show_id_fkey(*), show_media(*)";
-const SELECT_NO_MEDIA = "*, setlist_songs!setlist_songs_show_id_fkey(*)";
+// Progressively-degrading selects (see lib/shows.ts): full → drop attendees
+// (pre-0006) → drop media (pre-0004).
+const SELECT_TIERS = [
+  `*, ${SEL_SONGS}, ${SEL_MEDIA}, ${SEL_ATTENDEES}`,
+  `*, ${SEL_SONGS}, ${SEL_MEDIA}`,
+  `*, ${SEL_SONGS}`,
+];
 
 function sortRelations(show: {
   setlist_songs?: { position: number }[];
@@ -59,20 +61,19 @@ export async function loadMineAndFriends(
 
   const ids = [user.id, ...friendIds];
 
-  // One query for mine + friends' shows (RLS's are_friends policy allows theirs).
-  let { data: rows, error } = await supabase
-    .from("shows")
-    .select(SELECT_WITH_MEDIA)
-    .in("user_id", ids)
-    .order("show_date", { ascending: false });
-  if (error) {
+  // One query for mine + friends' shows (RLS's are_friends policy allows
+  // theirs), retrying with leaner embeds if a table isn't present yet.
+  let rows: unknown = null;
+  let error: unknown = null;
+  for (const select of SELECT_TIERS) {
     ({ data: rows, error } = await supabase
       .from("shows")
-      .select(SELECT_NO_MEDIA)
+      .select(select)
       .in("user_id", ids)
       .order("show_date", { ascending: false }));
-    if (error) throw error;
+    if (!error) break;
   }
+  if (error) throw error;
   const shows = ((rows as Parameters<typeof sortRelations>[0][]) ?? []).map(
     sortRelations
   ) as Show[];

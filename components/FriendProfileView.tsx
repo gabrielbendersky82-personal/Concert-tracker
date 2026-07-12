@@ -86,10 +86,21 @@ export default function FriendProfileView({
     load();
   }, [load]);
 
-  const mutual = useMemo(
-    () => (isSelf || guest ? [] : findMutual(myShows, theirShows)),
-    [isSelf, guest, myShows, theirShows]
-  );
+  const mutual = useMemo(() => {
+    if (isSelf || guest) return [];
+    const overlap = findMutual(myShows, theirShows);
+    // Also count my own shows where I tagged this friend as being there, even
+    // if they haven't logged that concert themselves.
+    const seen = new Set(overlap.map((s) => s.id));
+    const tagged = myShows.filter(
+      (s) =>
+        !seen.has(s.id) &&
+        (s.show_attendees ?? []).some((a) => a.friend_id === profile.id)
+    );
+    return [...overlap, ...tagged].sort((a, b) =>
+      b.show_date.localeCompare(a.show_date)
+    );
+  }, [isSelf, guest, myShows, theirShows, profile.id]);
   const stats = useMemo(() => computeStats(theirShows), [theirShows]);
 
   // When a logged-in viewer compares with someone else, overlay both people's

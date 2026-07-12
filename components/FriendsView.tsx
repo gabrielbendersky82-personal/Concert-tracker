@@ -10,8 +10,28 @@ import {
   type FriendGraph,
 } from "@/lib/friends";
 import { searchProfiles } from "@/lib/profiles";
+import type { FriendMemory, SharedNight } from "@/lib/sharedNights";
 import AppNav from "./AppNav";
 import type { Profile } from "@/lib/types";
+
+function fmtDate(iso: string): string {
+  if (/^\d{4}$/.test(iso)) return iso;
+  const d = new Date(iso + "T00:00:00");
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+}
+
+function friendList(friends: { label: string }[]): string {
+  const names = friends.map((f) => f.label);
+  if (names.length <= 1) return names[0] ?? "";
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
 
 function Avatar({ profile }: { profile: Profile }) {
   const letter = (profile.display_name || profile.handle || "?")
@@ -63,9 +83,13 @@ const btn =
 export default function FriendsView({
   myHandle,
   myName,
+  sharedNights = [],
+  activity = [],
 }: {
   myHandle: string;
   myName: string | null;
+  sharedNights?: SharedNight[];
+  activity?: FriendMemory[];
 }) {
   const [graph, setGraph] = useState<FriendGraph>({
     friends: [],
@@ -136,6 +160,76 @@ export default function FriendsView({
 
         {error && (
           <p className="mt-4 rounded-lg bg-red-500/10 p-2 text-sm text-red-600 dark:text-red-400">{error}</p>
+        )}
+
+        {/* Nights you shared */}
+        {sharedNights.length > 0 && (
+          <section className="mt-6 rounded-2xl border border-line bg-surface p-5">
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+              Nights you shared ({sharedNights.length})
+            </h2>
+            <ul className="mt-3 divide-y divide-line">
+              {sharedNights.slice(0, 12).map((n) => (
+                <li key={n.showId} className="flex items-center gap-3 py-2.5">
+                  <span className="text-lg" aria-hidden>
+                    🎟️
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-ink">
+                      {n.artist}
+                    </div>
+                    <div className="truncate text-xs text-ink-2">
+                      with {friendList(n.friends)}
+                      {n.city ? ` · ${n.city}` : ""}
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-xs tabular-nums text-ink-3">
+                    {fmtDate(n.show_date)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {sharedNights.length > 12 && (
+              <p className="mt-2 text-xs text-ink-3">
+                and {sharedNights.length - 12} more.
+              </p>
+            )}
+          </section>
+        )}
+
+        {/* Friends' recent memories */}
+        {activity.length > 0 && (
+          <section className="mt-4 rounded-2xl border border-line bg-surface p-5">
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+              Recently added by friends
+            </h2>
+            <ul className="mt-3 divide-y divide-line">
+              {activity.map((m) => (
+                <li key={m.show.id} className="flex items-center gap-3 py-2.5">
+                  <Avatar
+                    profile={{
+                      id: m.friendId,
+                      handle: m.friendLabel,
+                      display_name: m.friendLabel,
+                    }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm text-ink">
+                      <span className="font-medium">{m.friendLabel}</span>
+                      <span className="text-ink-2"> added </span>
+                      <span className="font-medium">{m.show.artist}</span>
+                    </div>
+                    <div className="truncate text-xs text-ink-2">
+                      {[m.show.venue, m.show.city].filter(Boolean).join(" · ")}
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-xs tabular-nums text-ink-3">
+                    {fmtDate(m.show.show_date)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         {/* Add friends */}
