@@ -1,5 +1,5 @@
 import { DEMO_SHOWS } from "./demoShows";
-import type { Show } from "./types";
+import type { Show, ShowAttendee } from "./types";
 
 // ── Live demo data ───────────────────────────────────────────────────────────
 // The demo's "You" persona mirrors the owner's real account instead of a
@@ -15,6 +15,43 @@ const OWNER_ID = "7e3cbd40-4d8f-4b15-9171-b8d387c9220c";
 
 /** How long a demo pageview may serve cached data before refetching. */
 const REVALIDATE_SECONDS = 3600;
+
+/** Curated demo friends who each "went with" You at a handful of shows, so the
+ *  demo showcases the Friends v2 shared-concerts feature. Ids match DEMO_PEOPLE. */
+const SHARED_FRIENDS = [
+  { id: "maya", label: "Maya" },
+  { id: "leo", label: "Leo" },
+];
+const SHARED_PER_FRIEND = 5;
+
+/**
+ * Tag SHARED_PER_FRIEND of the "you" shows with each demo friend, spread evenly
+ * across the history so clicking those shows in the demo reads "Went with Maya"
+ * / "Went with Leo". Deterministic (stable across renders) and additive.
+ */
+function withSharedFriends(all: Show[]): Show[] {
+  const youIds = all.filter((s) => s.user_id === "you").map((s) => s.id);
+  const total = youIds.length;
+  const picks = SHARED_FRIENDS.length * SHARED_PER_FRIEND;
+  if (total < picks) return all; // not enough shows to tag distinctly
+
+  const step = Math.max(1, Math.floor(total / picks));
+  const tags = new Map<string, ShowAttendee[]>();
+  for (let n = 0; n < picks; n++) {
+    const showId = youIds[Math.min(total - 1, n * step)];
+    const friend = SHARED_FRIENDS[n % SHARED_FRIENDS.length];
+    const list = tags.get(showId) ?? [];
+    list.push({ friend_id: friend.id, label: friend.label });
+    tags.set(showId, list);
+  }
+
+  return all.map((s) => {
+    const extra = tags.get(s.id);
+    return extra
+      ? { ...s, show_attendees: [...(s.show_attendees ?? []), ...extra] }
+      : s;
+  });
+}
 
 interface Row {
   id: string;
@@ -42,7 +79,7 @@ interface Row {
 export async function loadDemoShows(): Promise<Show[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anonKey) return DEMO_SHOWS;
+  if (!url || !anonKey) return withSharedFriends(DEMO_SHOWS);
 
   let rows: Row[];
   try {
@@ -56,13 +93,14 @@ export async function loadDemoShows(): Promise<Show[]> {
         signal: AbortSignal.timeout(8000),
       }
     );
-    if (!res.ok) return DEMO_SHOWS;
+    if (!res.ok) return withSharedFriends(DEMO_SHOWS);
     rows = (await res.json()) as Row[];
   } catch {
-    return DEMO_SHOWS;
+    return withSharedFriends(DEMO_SHOWS);
   }
   // Empty also means "profile no longer public" — RLS returns no rows to anon.
-  if (!Array.isArray(rows) || rows.length === 0) return DEMO_SHOWS;
+  if (!Array.isArray(rows) || rows.length === 0)
+    return withSharedFriends(DEMO_SHOWS);
 
   const live: Show[] = rows.map((r) => ({
     ...r,
@@ -76,7 +114,9 @@ export async function loadDemoShows(): Promise<Show[]> {
   }));
 
   const friends = DEMO_SHOWS.filter((s) => s.user_id !== "you");
-  return [...live, ...friends].sort((a, b) =>
-    a.show_date.localeCompare(b.show_date)
+  return withSharedFriends(
+    [...live, ...friends].sort((a, b) =>
+      a.show_date.localeCompare(b.show_date)
+    )
   );
 }
