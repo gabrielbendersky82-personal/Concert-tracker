@@ -10,6 +10,8 @@ export interface TicketScanResult {
   country: string;
   date: string; // YYYY-MM-DD or ""
   note: string;
+  /** Demo visitors: scans left this session. null when signed in. */
+  demoScansLeft: number | null;
 }
 
 const MAX_EDGE = 1600;

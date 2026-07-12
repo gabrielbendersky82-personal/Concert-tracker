@@ -51,6 +51,9 @@ export async function updateSession(request: NextRequest) {
     // The demo's add-show flow needs geocoding + setlist.fm search.
     pathname.startsWith("/api/geocode") ||
     pathname.startsWith("/api/setlistfm") ||
+    // Ticket scanning is open to demo visitors; the route itself enforces
+    // the per-session demo allowance.
+    pathname.startsWith("/api/ticket-scan") ||
     // PWA assets must load for logged-out visitors or install breaks.
     pathname === "/manifest.webmanifest" ||
     pathname === "/sw.js";

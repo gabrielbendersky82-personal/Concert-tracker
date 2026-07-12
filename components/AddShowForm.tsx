@@ -159,10 +159,16 @@ export default function AddShowForm({
       if (r.date) setDate(r.date);
       setImportedCoords(null);
       setHasDraft(true);
+      const scansLeft =
+        r.demoScansLeft === 1
+          ? " 1 demo scan left this session."
+          : r.demoScansLeft === 0
+            ? " That was your last demo scan for this session."
+            : "";
       setImportNote(
         `Read your ticket${r.artist ? `: ${r.artist}` : ""}.${
           r.note ? ` ${r.note}` : ""
-        } Review and save.`
+        } Review and save.${scansLeft}`
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't scan that ticket.");
@@ -272,14 +278,9 @@ export default function AddShowForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      {/* Method selector — pick how to add this show. Ticket scanning needs a
-          signed-in account (each scan calls a paid vision API). */}
-      <div
-        className={`grid ${
-          mediaEnabled ? "grid-cols-4" : "grid-cols-3"
-        } gap-1 rounded-xl border border-line bg-raised p-1`}
-      >
-        {(mediaEnabled ? METHODS : METHODS.filter((m) => m.id !== "scan")).map(
+      {/* Method selector — pick how to add this show. */}
+      <div className="grid grid-cols-4 gap-1 rounded-xl border border-line bg-raised p-1">
+        {METHODS.map(
           ({ id, label, icon: Icon }) => {
           const active = mode === id;
           return (
@@ -398,6 +399,12 @@ export default function AddShowForm({
             Works with old paper stubs and QR e-tickets. We&apos;ll read the
             artist, venue and date so you can review and save.
           </p>
+          {!mediaEnabled && (
+            <p className="text-xs text-accent">
+              Try it out — demo scanning is limited to 2 tickets per visit.
+              Sign in to scan without limits.
+            </p>
+          )}
         </div>
       )}
 

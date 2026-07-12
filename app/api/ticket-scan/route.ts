@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -7,11 +8,21 @@ import { createClient } from "@/lib/supabase/server";
 // e-tickets); Claude reads it and returns the show details to prefill the add
 // form. The Anthropic key stays server-side, so the client posts the image
 // here: client → this route → Anthropic API.
-// Requires ANTHROPIC_API_KEY. Signed-in users only — every scan costs money.
+// Requires ANTHROPIC_API_KEY. Signed-in users scan freely; demo visitors get a
+// small per-browser-session allowance (each scan costs real money), enforced
+// here via a session cookie — the client UI is informational only.
 
 /** Extraction runs on Haiku (fast + cheap, plenty for reading tickets);
  *  override with TICKET_SCAN_MODEL to escalate if faded stubs misread. */
 const MODEL = process.env.TICKET_SCAN_MODEL || "claude-haiku-4-5";
+
+/** Demo allowance: scans per browser session for signed-out visitors. */
+const DEMO_SCAN_LIMIT = 2;
+/** Session cookie (no max-age → cleared when the browser closes). */
+const DEMO_COOKIE = "cm_demo_scans";
+
+const LIMIT_MESSAGE =
+  "You've used both demo scans for this session. Sign in to scan as many tickets as you like.";
 
 const MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
 type MediaType = (typeof MEDIA_TYPES)[number];
@@ -58,11 +69,16 @@ export async function POST(request: Request) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Demo visitors: enforce the per-session allowance before spending anything.
+  const cookieStore = await cookies();
+  let demoScansUsed = 0;
   if (!user) {
-    return NextResponse.json(
-      { error: "Sign in to scan tickets." },
-      { status: 401 }
-    );
+    demoScansUsed = parseInt(cookieStore.get(DEMO_COOKIE)?.value ?? "0", 10);
+    if (!Number.isFinite(demoScansUsed) || demoScansUsed < 0) demoScansUsed = 0;
+    if (demoScansUsed >= DEMO_SCAN_LIMIT) {
+      return NextResponse.json({ error: LIMIT_MESSAGE }, { status: 429 });
+    }
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -148,22 +164,40 @@ export async function POST(request: Request) {
     );
   }
 
+  // The model call happened, so the money is spent — a demo scan is consumed
+  // now even if the photo turns out to be unreadable (otherwise a visitor
+  // could retry unreadable images forever on our dime).
+  const demoScansLeft = user
+    ? null
+    : Math.max(0, DEMO_SCAN_LIMIT - (demoScansUsed + 1));
+  const respond = (payload: object, status: number) => {
+    const res = NextResponse.json(payload, { status });
+    if (!user) {
+      res.cookies.set(DEMO_COOKIE, String(demoScansUsed + 1), {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+      });
+    }
+    return res;
+  };
+
   // The model is told to reply with bare JSON; tolerate a fenced block anyway.
   const jsonText = text.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, "");
   let extracted: Extracted;
   try {
     extracted = JSON.parse(jsonText) as Extracted;
   } catch {
-    return NextResponse.json(
+    return respond(
       { error: "Couldn't read that ticket. Try a clearer photo." },
-      { status: 422 }
+      422
     );
   }
 
   if (extracted.is_ticket === false) {
-    return NextResponse.json(
+    return respond(
       { error: "That doesn't look like a concert ticket. Try another photo." },
-      { status: 422 }
+      422
     );
   }
 
@@ -172,23 +206,27 @@ export async function POST(request: Request) {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(dateRaw) ? dateRaw : "";
 
   if (!artist && !date) {
-    return NextResponse.json(
+    return respond(
       {
         error:
           "Couldn't make out the show details. Try a sharper, well-lit photo of the whole ticket.",
       },
-      { status: 422 }
+      422
     );
   }
 
-  return NextResponse.json({
-    result: {
-      artist,
-      venue: cleanField(extracted.venue),
-      city: cleanField(extracted.city),
-      country: cleanField(extracted.country),
-      date,
-      note: cleanField(extracted.note),
+  return respond(
+    {
+      result: {
+        artist,
+        venue: cleanField(extracted.venue),
+        city: cleanField(extracted.city),
+        country: cleanField(extracted.country),
+        date,
+        note: cleanField(extracted.note),
+        demoScansLeft,
+      },
     },
-  });
+    200
+  );
 }
