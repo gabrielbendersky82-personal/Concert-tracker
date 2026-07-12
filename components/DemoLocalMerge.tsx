@@ -6,30 +6,31 @@ import DashboardView from "./DashboardView";
 import WrappedStory from "./WrappedStory";
 import EntityView from "./EntityView";
 import { loadDemoLocalShows } from "@/lib/demoLocal";
-import { DEMO_HANDLE, DEMO_PEOPLE, DEMO_SHOWS } from "@/lib/demoShows";
+import { DEMO_HANDLE, DEMO_PEOPLE } from "@/lib/demoShows";
 import type { Show } from "@/lib/types";
 
 /**
- * Demo timeline/dashboard wrappers: render the curated demo set on the
- * server, then merge in any shows this visitor added (browser-local) after
- * mount, so their additions follow them across every demo view.
+ * Demo timeline/dashboard wrappers: render the demo dataset (the owner's live
+ * shows + curated friends, resolved server-side) first, then merge in any
+ * shows this visitor added (browser-local) after mount, so their additions
+ * follow them across every demo view.
  */
-function useDemoShows(): Show[] {
-  const [shows, setShows] = useState<Show[]>(DEMO_SHOWS);
+function useDemoShows(initial: Show[]): Show[] {
+  const [shows, setShows] = useState<Show[]>(initial);
   useEffect(() => {
     const local = loadDemoLocalShows();
     if (local.length > 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setShows([...local, ...DEMO_SHOWS]);
+      setShows([...local, ...initial]);
     }
-  }, []);
+  }, [initial]);
   return shows;
 }
 
-export function DemoTimeline() {
+export function DemoTimeline({ initialShows }: { initialShows: Show[] }) {
   return (
     <TimelineView
-      shows={useDemoShows()}
+      shows={useDemoShows(initialShows)}
       handle={DEMO_HANDLE}
       guest
       attendees={DEMO_PEOPLE}
@@ -38,10 +39,10 @@ export function DemoTimeline() {
   );
 }
 
-export function DemoDashboard() {
+export function DemoDashboard({ initialShows }: { initialShows: Show[] }) {
   return (
     <DashboardView
-      shows={useDemoShows()}
+      shows={useDemoShows(initialShows)}
       handle={DEMO_HANDLE}
       guest
       attendees={DEMO_PEOPLE}
@@ -53,15 +54,17 @@ export function DemoDashboard() {
 export function DemoEntity({
   kind,
   name,
+  initialShows,
 }: {
   kind: "artist" | "venue";
   name: string;
+  initialShows: Show[];
 }) {
   return (
     <EntityView
       kind={kind}
       name={name}
-      shows={useDemoShows()}
+      shows={useDemoShows(initialShows)}
       handle={DEMO_HANDLE}
       guest
       attendees={DEMO_PEOPLE}
@@ -70,9 +73,9 @@ export function DemoEntity({
   );
 }
 
-export function DemoWrapped() {
+export function DemoWrapped({ initialShows }: { initialShows: Show[] }) {
   // Wrapped is personal — the demo wraps the "you" persona's shows
-  // (curated history + anything this visitor added locally).
-  const shows = useDemoShows().filter((s) => s.user_id === "you");
+  // (live history + anything this visitor added locally).
+  const shows = useDemoShows(initialShows).filter((s) => s.user_id === "you");
   return <WrappedStory shows={shows} handle={DEMO_HANDLE} guest />;
 }

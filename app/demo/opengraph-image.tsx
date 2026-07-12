@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { DEMO_SHOWS } from "@/lib/demoShows";
+import { loadDemoShows } from "@/lib/demoLive";
 import { OG_SIZE, ogCard, showStats } from "@/lib/ogCard";
 
 export const size = OG_SIZE;
@@ -12,7 +12,7 @@ export default async function Image() {
       eyebrow: "Live demo",
       title: "Every show, pinned to the place it happened.",
       subtitle: "Explore a real concert history — no sign-in needed.",
-      stats: showStats(DEMO_SHOWS),
+      stats: showStats(await loadDemoShows()),
     }),
     size
   );

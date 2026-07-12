@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DemoEntity } from "@/components/DemoLocalMerge";
+import { loadDemoShows } from "@/lib/demoLive";
 
 export async function generateMetadata({
   params,
@@ -16,5 +17,11 @@ export default async function DemoArtistPage({
   params: Promise<{ name: string }>;
 }) {
   const { name } = await params;
-  return <DemoEntity kind="artist" name={decodeURIComponent(name)} />;
+  return (
+    <DemoEntity
+      kind="artist"
+      name={decodeURIComponent(name)}
+      initialShows={await loadDemoShows()}
+    />
+  );
 }
