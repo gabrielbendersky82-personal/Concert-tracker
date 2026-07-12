@@ -14,7 +14,7 @@ import "leaflet/dist/leaflet.css";
 import { firstPhotoSrc } from "@/lib/media";
 import { useTheme } from "@/lib/theme";
 import { isUpcoming, todayISO } from "@/lib/upcoming";
-import type { Show } from "@/lib/types";
+import { attendeeName, type Show } from "@/lib/types";
 
 // CARTO basemaps per theme: voyager for light, dark_all for dark so the
 // colored pins glow against the near-black tiles.
@@ -274,6 +274,14 @@ export default function MapView({
                     <div className="mt-1 text-xs text-ink-3">
                       {show.show_date}
                     </div>
+                    {(show.show_attendees?.length ?? 0) > 0 && (
+                      <div className="mt-1 text-xs font-medium text-accent">
+                        with{" "}
+                        {show
+                          .show_attendees!.map((a) => attendeeName(a))
+                          .join(", ")}
+                      </div>
+                    )}
                   </div>
                 </Popup>
               ) : (

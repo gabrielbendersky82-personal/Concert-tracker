@@ -23,7 +23,7 @@ import { onThisDay } from "@/lib/memories";
 import { nextUpcoming, untilLabel } from "@/lib/upcoming";
 import { createClient } from "@/lib/supabase/client";
 import { SAMPLE_SHOWS } from "@/lib/sampleShows";
-import type { NewShowInput, Show, ShowMedia } from "@/lib/types";
+import { attendeeName, type NewShowInput, type Show, type ShowMedia } from "@/lib/types";
 import type { Attendee } from "@/lib/demoShows";
 import FriendsToggle from "./FriendsToggle";
 import BrandMark from "./BrandMark";
@@ -761,6 +761,11 @@ function ShowsList({
                 {attendeeOf?.(show) ? `${attendeeOf(show)!.label} · ` : ""}
                 {[show.venue, show.city].filter(Boolean).join(" · ") || "—"}
               </div>
+              {(show.show_attendees?.length ?? 0) > 0 && (
+                <div className="truncate text-xs text-accent">
+                  with {show.show_attendees!.map((a) => attendeeName(a)).join(", ")}
+                </div>
+              )}
             </button>
           </li>
         ))}
